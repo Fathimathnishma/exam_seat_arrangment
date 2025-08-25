@@ -1,4 +1,6 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
+import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
+import 'package:bca_exam_managment/features/view/teachers/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class TeacherLoginScreen extends StatefulWidget {
@@ -118,12 +120,10 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
                     //     SnackBar(content: Text('Please fill all fields')),
                     //   );
                     // } else {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => StudentDashboard(),
-                    //   ),
-                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AppRoot()),
+                    );
                     // }
                   },
                   child: Container(

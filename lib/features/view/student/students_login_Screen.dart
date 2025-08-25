@@ -81,7 +81,7 @@ class _StudentsLoginScreenState extends State<StudentsLoginScreen> {
                   enabledBorder: blueBorder,
                   focusedBorder: blueBorder,
                 ),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.name,
               ),
               SizedBox(height: 20),
 
@@ -90,7 +90,7 @@ class _StudentsLoginScreenState extends State<StudentsLoginScreen> {
                 'Select Your Department:',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
-              SizedBox(height: 5),  
+              SizedBox(height: 5),
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(
                   border: blueBorder,
@@ -120,7 +120,6 @@ class _StudentsLoginScreenState extends State<StudentsLoginScreen> {
               Center(
                 child: Text(
                   'Please ensure your Register Number \n and Department are correct.',
-
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),

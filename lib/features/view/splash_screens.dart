@@ -34,18 +34,6 @@ class _SplashScreensState extends State<SplashScreens> {
     });
   }
 
-  // void initState() {
-  //   super.initState();
-  //   // context.read<AuthenticationProvider>().fetchUser();
-  //  // _initializeApp();
-  //   // Start the fade-in animation
-  //   Future.delayed(Duration(milliseconds: 500), () {
-  //     setState(() {
-  //       _opacity = 1.0;
-  //     });
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
