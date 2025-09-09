@@ -2,37 +2,22 @@ import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
-class AddRoomsScreen extends StatefulWidget {
-  const AddRoomsScreen({super.key});
+class SelectStudentsScreen extends StatefulWidget {
+  const SelectStudentsScreen({super.key});
 
   @override
-  State<AddRoomsScreen> createState() => _AddRoomsScreenState();
+  State<SelectStudentsScreen> createState() => _SelectStudentsScreenState();
 }
 
-class _AddRoomsScreenState extends State<AddRoomsScreen> {
-  final OutlineInputBorder blueBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(6),
-    borderSide: BorderSide(color: Colors.blue, width: 1.5),
-  );
-
+class _SelectStudentsScreenState extends State<SelectStudentsScreen> {
   @override
+   final blueBorder = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(6),
+    borderSide: BorderSide(color: AppColors.primary, width: 1),
+  );
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
-
       appBar: AppBar(
-        backgroundColor: AppColors.white,
-
-        title: Center(
-          child: Text(
-            "Add Rooms     ",
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-              color: AppColors.textColor,
-            ),
-          ),
-        ),
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: InkWell(
@@ -61,7 +46,7 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
               Gap(12),
               TextFormField(
                 decoration: InputDecoration(
-                  hintText: 'Exam Name:',
+                  hintText: 'select Exam ',
                   hintStyle: TextStyle(
                     color: AppColors.textColor,
                     fontSize: 14,
@@ -91,7 +76,7 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
                           vertical: 8,
                           horizontal: 12,
                         ),
-                        hintText: 'Time',
+                        hintText: 'from',
                         hintStyle: TextStyle(color: AppColors.textColor),
                       ),
                     ),
@@ -107,7 +92,7 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
                           vertical: 8,
                           horizontal: 12,
                         ),
-                        hintText: 'Date',
+                        hintText: 'to',
                         hintStyle: TextStyle(color: AppColors.textColor),
                       ),
                     ),
@@ -121,7 +106,7 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
-                  'Submit',
+                  'Save',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.white,

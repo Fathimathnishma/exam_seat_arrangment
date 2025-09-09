@@ -12,15 +12,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background top container
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: MediaQuery.sizeOf(context).height * 0.2,
+      body: SizedBox.expand(
+        child: Stack(
+          children: [
+           
+            Container(
+              height: MediaQuery.sizeOf(context).height * 0.23,
               decoration: BoxDecoration(
                 color: AppColors.primary,
                 borderRadius: const BorderRadius.only(
@@ -29,32 +26,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-          ),
 
-          // Foreground content
-          Positioned(
-            top: 50,
-            left: 20,
-            right: 20,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(backgroundColor: AppColors.yellow, radius: 80),
-                const SizedBox(height: 10),
-                const Text("User Name", style: TextStyle(fontSize: 20)),
+           
+            Positioned(
+              top: MediaQuery.sizeOf(context).height * 0.2 - 50,
+              left: 0,
+              right: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(backgroundColor: AppColors.grey, radius: 80),
+                  const SizedBox(height: 10),
+                  const Text("User Name", style: TextStyle(fontSize: 20)),
 
-                const SizedBox(height: 22),
-                _buildProfileOption("Profile"),
-                const SizedBox(height: 22),
-                _buildProfileOption("Settings"),
-                const SizedBox(height: 22),
-                _buildProfileOption("Notifications"),
-                const SizedBox(height: 22),
-                _buildProfileOption("Logout"),
-              ],
+                  const SizedBox(height: 22),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: _buildProfileOption("Profile"),
+                  ),
+                  const SizedBox(height: 22),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: _buildProfileOption("Settings"),
+                  ),
+                  const SizedBox(height: 22),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: _buildProfileOption("Notifications"),
+                  ),
+                  const SizedBox(height: 22),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: _buildProfileOption("Logout"),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -62,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildProfileOption(String title) {
     return Container(
       height: 70,
-      width: double.infinity, // works now since parent has constraints
+      width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(7),

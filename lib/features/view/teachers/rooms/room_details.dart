@@ -1,5 +1,6 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/features/view/local/localdata.dart';
+import 'package:bca_exam_managment/features/view/teachers/select_students.dart';
 import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,24 @@ class RoomDetailSrcen extends StatefulWidget {
 }
 
 class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
+  final List<Color> colors = [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.orange,
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,8 +65,12 @@ class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         onPressed: () {
-        
-      },),
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => SelectStudentsScreen()),
+          );
+        },
+      ),
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -64,7 +87,7 @@ class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    'Exam Name:Computer Apllications',
+                    'Room Name:ca23s',
                     style: TextStyle(color: AppColors.textColor, fontSize: 14),
                   ),
                 ),
@@ -154,7 +177,7 @@ class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          ' Semester:First',
+                          ' matrix',
                           style: TextStyle(
                             color: AppColors.textColor,
                             fontSize: 14,
@@ -168,7 +191,9 @@ class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text("Rooms", style: TextStyle(fontSize: 20)),
+              child: Row(
+                children: [Text("Rooms", style: TextStyle(fontSize: 20))],
+              ),
             ),
 
             Padding(
@@ -179,7 +204,7 @@ class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
                 itemCount: 2,
                 itemBuilder: (context, index) {
                   return MainFrame(
-                    examName: exams[index]["examName"]!,
+                    examName: "room 1",
                     examCode: exams[index]["examCode"]!,
                     time: exams[index]["time"]!,
                     sem: exams[index]["sem"]!,
@@ -223,7 +248,7 @@ class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         CircleAvatar(
                           backgroundColor: AppColors.green,
@@ -248,6 +273,30 @@ class _RoomDetailSrcenState extends State<RoomDetailSrcen> {
                   ),
                 ],
               ),
+            ),
+            GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4, // 4 columns
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: colors.length,
+              padding: const EdgeInsets.all(10),
+              itemBuilder: (context, index) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: colors[index % colors.length],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      "Item ${index + 1}",
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),

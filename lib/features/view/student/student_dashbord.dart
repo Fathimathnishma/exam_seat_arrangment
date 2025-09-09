@@ -13,6 +13,7 @@ class StudentDashboard extends StatelessWidget {
     final String seatNumber = "15";
 
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -47,7 +48,7 @@ class StudentDashboard extends StatelessWidget {
               child: Text(
                 "Your Name: $name",
                 style: TextStyle(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   fontSize: 14,
                   color: AppColors.textColor,
                 ),
@@ -69,7 +70,7 @@ class StudentDashboard extends StatelessWidget {
                     child: Text(
                       "Your Register Number: $registerNumber",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                        // fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: AppColors.textColor,
                       ),
@@ -80,7 +81,7 @@ class StudentDashboard extends StatelessWidget {
                     child: Text(
                       "Your Class Number: $classNumber",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                        // fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: AppColors.textColor,
                       ),
@@ -92,7 +93,7 @@ class StudentDashboard extends StatelessWidget {
                     child: Text(
                       "Your Seat No: $seatNumber",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                        // fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: AppColors.textColor,
                       ),
@@ -104,10 +105,11 @@ class StudentDashboard extends StatelessWidget {
             SizedBox(height: 20),
             Text(
               "Please Ensure all details (Name, Register Number, Class Number, Seat Number) are 100% correct.",
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.textColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                // fontWeight: FontWeight.w600,
               ),
             ),
           ],

@@ -54,7 +54,7 @@ class _StudentsLoginScreenState extends State<StudentsLoginScreen> {
                 child: Text(
                   "Student Dashboard",
                   style: TextStyle(
-                    fontWeight: FontWeight.w900,
+                    //  fontWeight: FontWeight.w900,
                     fontSize: 26,
                     color: AppColors.textColor,
                   ),
@@ -120,7 +120,7 @@ class _StudentsLoginScreenState extends State<StudentsLoginScreen> {
               Center(
                 child: Text(
                   'Please ensure your Register Number \n and Department are correct.',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  //  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
               SizedBox(

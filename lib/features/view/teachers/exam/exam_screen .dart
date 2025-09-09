@@ -1,6 +1,7 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/core/utils/app_images.dart';
 import 'package:bca_exam_managment/features/view/local/localdata.dart';
+import 'package:bca_exam_managment/features/view/teachers/exam/exam_details.dart';
 import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +16,10 @@ class _AllExamScreenState extends State<AllExamScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
+
       appBar: AppBar(
+        backgroundColor: AppColors.white,
         title: Text(
           "All Exams",
           //textAlign: TextAlign.start,
@@ -80,11 +84,21 @@ class _AllExamScreenState extends State<AllExamScreen> {
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: MainFrame(
-                    examName: exams[index]["examName"]!,
-                    examCode: exams[index]["examCode"]!,
-                    time: exams[index]["time"]!,
-                    sem: exams[index]["sem"]!,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ExamDetailScreen(),
+                        ),
+                      );
+                    },
+                    child: MainFrame(
+                      examName: exams[index]["examName"]!,
+                      examCode: exams[index]["examCode"]!,
+                      time: exams[index]["time"]!,
+                      sem: exams[index]["sem"]!,
+                    ),
                   ),
                 );
               },

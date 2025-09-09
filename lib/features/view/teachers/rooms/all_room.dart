@@ -91,7 +91,7 @@ class _AllRoomScreensState extends State<AllRoomScreens> {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: MainFrame(
-                      examName: exams[index]["examName"]!,
+                      examName: "Room12"!,
                       examCode: exams[index]["examCode"]!,
                       time: exams[index]["time"]!,
                       sem: exams[index]["sem"]!,

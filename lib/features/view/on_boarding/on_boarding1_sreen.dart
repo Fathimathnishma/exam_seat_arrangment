@@ -11,13 +11,13 @@ class OnBoardingScreen extends StatefulWidget {
   State<OnBoardingScreen> createState() => _OnBoardingScreenState();
 }
 
-class _OnBoardingScreenState extends State<OnBoardingScreen> {
+class _OnBoardingScreenState extends State<OnBoardingScreen> {  
   PageController pageController = PageController();
   int currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-   // final mqHeight = MediaQuery.of(context).size.height;
+    // final mqHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -30,10 +30,10 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
             child: GestureDetector(
               onTap: () {
                 OnboardingLocalData.readOnBoardingScreen();
-                // EasyNavigation.push(
-                //   context: context,
-                //   page: const LoginScreen(),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => UserTypeScreen()),
+                );
               },
               child: Text(
                 'skip',

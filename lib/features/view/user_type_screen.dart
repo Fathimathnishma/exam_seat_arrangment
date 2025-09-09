@@ -18,6 +18,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        backgroundColor: AppColors.white,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: InkWell(
@@ -52,7 +53,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
               "Select Login Role",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
+                // fontWeight: FontWeight.w500,
                 fontSize: 26,
                 color: AppColors.textColor,
               ),
@@ -83,16 +84,16 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 Image.asset(AppImages.teacher),
-                                SizedBox(height: 10),
+                                // SizedBox(height: 10),
                                 Text(
                                   "Teacher",
                                   style: TextStyle(
                                     fontSize: 20,
                                     color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ],
@@ -121,16 +122,16 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 Image.asset(AppImages.student),
-                                SizedBox(height: 10),
+                                //  SizedBox(height: 10),
                                 Text(
                                   "Student",
                                   style: TextStyle(
                                     fontSize: 20,
                                     color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ],
@@ -147,7 +148,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.textColor,
-                    fontWeight: FontWeight.w700,
+                    // fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

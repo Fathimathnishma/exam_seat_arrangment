@@ -33,7 +33,7 @@ class _AppRootState extends State<AppRoot> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: _pages[_selectedIndex]),
+      body: _pages[_selectedIndex],
       extendBody: true,
       bottomNavigationBar: Stack(
         alignment: Alignment.bottomCenter,

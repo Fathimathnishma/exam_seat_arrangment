@@ -45,7 +45,7 @@ class OnboardingFrame extends StatelessWidget {
             onboardingModel.title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w600,
               fontSize: 26,
               color: AppColors.textColor,
               //     .white, // Color here doesn't matter due to the gradient.
@@ -57,7 +57,7 @@ class OnboardingFrame extends StatelessWidget {
             style: TextStyle(
               // maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
               fontSize: 14,
               color: AppColors.textColor,
             ),

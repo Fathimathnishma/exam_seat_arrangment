@@ -41,23 +41,23 @@ class _MainFrameState extends State<MainFrame> {
             Text(
               widget.examName,
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 16,
                 color: AppColors.primary,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
               ),
             ),
             Text(
               "examCode: ${widget.examCode}",
-              style: TextStyle(fontSize: 16, color: AppColors.textColor),
+              style: TextStyle(fontSize: 13, color: AppColors.textColor),
             ),
             Text(
               "Semester: ${widget.sem}",
-              style: TextStyle(fontSize: 16, color: AppColors.textColor),
+              style: TextStyle(fontSize: 13, color: AppColors.textColor),
             ),
 
             Text(
               "Duration: ${widget.time}",
-              style: TextStyle(fontSize: 16, color: AppColors.textColor),
+              style: TextStyle(fontSize: 13, color: AppColors.textColor),
             ),
           ],
         ),

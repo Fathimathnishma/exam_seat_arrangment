@@ -1,6 +1,3 @@
-import 'dart:developer';
-
-import 'package:bca_exam_managment/features/models/onbording/onbording_model.dart';
 import 'package:bca_exam_managment/features/view/on_boarding/on_boarding1_sreen.dart';
 import 'package:flutter/material.dart';
 
@@ -41,7 +38,7 @@ class _SplashScreensState extends State<SplashScreens> {
         child: AnimatedOpacity(
           duration: Duration(seconds: 2), // Fade-in duration
           opacity: _opacity,
-          child: Text("exam arrangment,", style: TextStyle(fontSize: 32)),
+          child: Text("exam arrangment,", style: TextStyle(fontSize: 30)),
           // child: Image.asset(
           //  AppImages.eBookImage,
           //   height: 51,

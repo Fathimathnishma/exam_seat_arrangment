@@ -14,7 +14,11 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
+
       appBar: AppBar(
+        backgroundColor: AppColors.white,
+
         title: Center(
           child: Text(
             "Exam details",
@@ -45,6 +49,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> {
       ),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             Padding(

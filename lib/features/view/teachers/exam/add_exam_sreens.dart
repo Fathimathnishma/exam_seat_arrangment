@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/core/utils/app_images.dart';
+import 'package:bca_exam_managment/features/view/teachers/exam/service.dart';
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
 
 class AddExamScreens extends StatefulWidget {
   const AddExamScreens({super.key});
@@ -25,7 +27,9 @@ class _AddExamScreensState extends State<AddExamScreens> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       appBar: AppBar(
+        backgroundColor: AppColors.white,
         title: Center(
           child: Text(
             "Add Exams ",
@@ -55,7 +59,7 @@ class _AddExamScreensState extends State<AddExamScreens> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0), // Added padding for better UI
+        padding: const EdgeInsets.all(16.0),
         child: SizedBox(
           height: MediaQuery.sizeOf(context).height * 0.4,
           child: Column(
@@ -76,7 +80,7 @@ class _AddExamScreensState extends State<AddExamScreens> {
                   enabledBorder: blueBorder,
                   focusedBorder: blueBorder,
                 ),
-                keyboardType: TextInputType.text, // ✅ Changed to text
+                keyboardType: TextInputType.text,
               ),
 
               Padding(
@@ -111,7 +115,7 @@ class _AddExamScreensState extends State<AddExamScreens> {
                         onChanged: (val) => setState(() => selectedSem = val),
                       ),
                     ),
-                    SizedBox(width: 10), // spacing between dropdowns
+                    SizedBox(width: 10),
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
@@ -144,6 +148,7 @@ class _AddExamScreensState extends State<AddExamScreens> {
                   ],
                 ),
               ),
+
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
@@ -163,7 +168,7 @@ class _AddExamScreensState extends State<AddExamScreens> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 10), // spacing between dropdowns
+                    SizedBox(width: 10),
                     Expanded(
                       child: TextFormField(
                         decoration: InputDecoration(
@@ -193,38 +198,48 @@ class _AddExamScreensState extends State<AddExamScreens> {
                   ),
                 ),
               ),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    height: 44,
-                    width: 157,
-                    decoration: BoxDecoration(
-                      // color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: AppColors.primary, width: 1),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text(
-                            "Upload File",
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 17,
+                  InkWell(
+                    onTap: () async {
+                      final students = await pickFileAndParse(context);
+                      if (students.isNotEmpty) {
+                        for (var s in students) {
+                          debugPrint(s.toString()); // Prints parsed students
+                        }
+                      }
+                    },
+
+                    child: Container(
+                      height: 44,
+                      width: 157,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(color: AppColors.primary, width: 1),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Text(
+                              "Upload File",
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 17,
+                              ),
                             ),
-                          ),
-                          Image.asset(AppImages.upload),
-                        ],
+                            Image.asset(AppImages.upload),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   SizedBox(width: 16),
                   Container(
                     height: 44,
-
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(5),
