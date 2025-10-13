@@ -33,4 +33,18 @@ class UserModel {
 
   String toJson() => json.encode(toMap());
 
+
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? password,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      password: password ?? this.password,
+    );
+  }
 }

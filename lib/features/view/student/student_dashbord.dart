@@ -13,9 +13,11 @@ class StudentDashboard extends StatelessWidget {
     final String seatNumber = "15";
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.background,
+
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),

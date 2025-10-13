@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1077025724666",
+    "project_id": "exam-seat-system",
+    "storage_bucket": "exam-seat-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1077025724666:android:487a47b10d7d1c79e3d143",
+        "android_client_info": {
+          "package_name": "com.example.bca_exam_managment"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIqSq2Fuiup7VCbhQ5ApG9Dx-4bHcIGNA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

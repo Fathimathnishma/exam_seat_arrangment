@@ -16,9 +16,11 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.background,
+
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: InkWell(

@@ -11,7 +11,7 @@ class OnBoardingScreen extends StatefulWidget {
   State<OnBoardingScreen> createState() => _OnBoardingScreenState();
 }
 
-class _OnBoardingScreenState extends State<OnBoardingScreen> {  
+class _OnBoardingScreenState extends State<OnBoardingScreen> {
   PageController pageController = PageController();
   int currentIndex = 0;
 
@@ -19,9 +19,11 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   Widget build(BuildContext context) {
     // final mqHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.background,
+
         automaticallyImplyLeading: false,
 
         actions: [

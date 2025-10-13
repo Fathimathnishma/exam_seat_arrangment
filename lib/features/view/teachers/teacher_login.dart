@@ -22,9 +22,10 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.background,
+
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -33,7 +34,8 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
             borderRadius: BorderRadius.circular(6),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.background,
+
                 boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 1)],
                 borderRadius: BorderRadius.circular(6),
               ),

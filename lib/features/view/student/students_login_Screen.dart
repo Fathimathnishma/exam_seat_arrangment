@@ -24,9 +24,11 @@ class _StudentsLoginScreenState extends State<StudentsLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.background,
+
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),

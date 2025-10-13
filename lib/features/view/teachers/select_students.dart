@@ -11,12 +11,14 @@ class SelectStudentsScreen extends StatefulWidget {
 
 class _SelectStudentsScreenState extends State<SelectStudentsScreen> {
   @override
-   final blueBorder = OutlineInputBorder(
+  final blueBorder = OutlineInputBorder(
     borderRadius: BorderRadius.circular(6),
     borderSide: BorderSide(color: AppColors.primary, width: 1),
   );
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
+
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.all(8.0),

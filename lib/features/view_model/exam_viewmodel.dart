@@ -1,0 +1,278 @@
+import 'package:bca_exam_managment/features/models/exam_model.dart';
+import 'package:bca_exam_managment/features/models/student_model.dart';
+import 'package:bca_exam_managment/features/repo/exam_repo.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
+class ExamProvider extends ChangeNotifier {
+  final ExamRepository _examRepo;
+  ExamProvider(this._examRepo);
+
+  // Controllers
+  final TextEditingController examNameController = TextEditingController();
+  final TextEditingController courseIdController = TextEditingController();
+  final TextEditingController timeController = TextEditingController();
+  final TextEditingController endTimeController = TextEditingController();
+  final TextEditingController dateController = TextEditingController();
+
+  // Dropdowns
+  List<String> semesters = ['1', '2', '3', '4', '5', '6'];
+  List<String> departments = ['CS', 'IT', 'ECE', 'ME', 'CE'];
+  String? selectedDepartment;
+  String? selectedSem;
+
+  // Date
+  DateTime? selectedDate;
+  List<ExamModel> allExams = [];
+    List<ExamModel> todaysExams = [];   
+
+  // Students
+  List<StudentsModel> _students = [];
+  List<StudentsModel> get students => _students;
+
+  // Loading & error
+  bool isLoading = false;
+  String? errorMessage;
+
+  // Update tracking
+  String? updatingExamId; // ✅ null = add, not null = update
+
+  /// Set exam for update (pre-fill form)
+  void setExamForUpdate(ExamModel exam) {
+    updatingExamId = exam.id;
+    examNameController.text = exam.courseName;
+    courseIdController.text = exam.courseId;
+    selectedDepartment = exam.department;
+    selectedSem = exam.sem;
+    selectedDate = _parseDate(exam.date);
+    timeController.text =
+        exam.duration.split('h')[0] +
+        ":" +
+        exam.duration.split(' ')[1]; // simple split
+    endTimeController.text = ""; // optional: user can edit
+    _students = exam.students!;
+    notifyListeners();
+  }
+
+  DateTime? _parseDate(String date) {
+    try {
+      final parts = date.split('-');
+      return DateTime(
+        int.parse(parts[2]),
+        int.parse(parts[1]),
+        int.parse(parts[0]),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void addStudents(List<StudentsModel> newStudents) {
+    _students.addAll(newStudents);
+    notifyListeners();
+  }
+
+  void clearStudents() {
+    _students.clear();
+    notifyListeners();
+  }
+
+  void setSemester(String? sem) {
+    selectedSem = sem;
+    notifyListeners();
+  }
+
+  void setDepartment(String? dept) {
+    selectedDepartment = dept;
+    notifyListeners();
+  }
+
+  /// Calculate exam duration
+  String getDuration() {
+    if (timeController.text.isEmpty || endTimeController.text.isEmpty)
+      return "";
+
+    int parseMinutes(String t) {
+      final parts = t.split(':');
+      int h = int.parse(parts[0]);
+      int m = int.parse(parts[1].split(' ')[0]);
+      if (t.toLowerCase().contains('pm') && h != 12) h += 12;
+      if (t.toLowerCase().contains('am') && h == 12) h = 0;
+      return h * 60 + m;
+    }
+
+    final diff =
+        parseMinutes(endTimeController.text) -
+        parseMinutes(timeController.text);
+    return "${diff ~/ 60}h ${diff % 60}m";
+  }
+
+  /// Save exam (add or update)
+  Future<void> saveExam() async {
+    if (updatingExamId == null) {
+      await addExam();
+    } else {
+      await updateExam();
+    }
+  }
+
+  /// Add Exam
+  Future<void> addExam() async {
+    if (examNameController.text.isEmpty ||
+        courseIdController.text.isEmpty ||
+        selectedDepartment == null ||
+        selectedSem == null ||
+        timeController.text.isEmpty ||
+        endTimeController.text.isEmpty ||
+        selectedDate == null) {
+      errorMessage = "Please fill all fields";
+      notifyListeners();
+      return;
+    }
+
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final formattedDate =
+          "${selectedDate!.day.toString().padLeft(2, '0')}-"
+          "${selectedDate!.month.toString().padLeft(2, '0')}-"
+          "${selectedDate!.year}";
+
+      final exam = ExamModel(
+        examId: null,
+        courseName: examNameController.text,
+        courseId: courseIdController.text,
+        duration: getDuration(),
+        department: selectedDepartment!,
+        sem: selectedSem!,
+        date: formattedDate,
+        createdAt: Timestamp.now(),
+        students: _students,
+        startTime: timeController.text, 
+        endTime: endTimeController.text, // simpl
+      );
+
+      await _examRepo.addExam(exam);
+
+      clearData();
+      clearStudents();
+      await fetchExams();
+    } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+
+///FETCH TODAY EXAM
+
+   void fetchTodaysExams() {
+    final now = DateTime.now();
+    todaysExams = allExams.where((exam) {
+      final examDate = DateTime.fromMillisecondsSinceEpoch(int.parse(exam.date)); // adjust if your field is different
+      return examDate.year == now.year &&
+          examDate.month == now.month &&
+          examDate.day == now.day;
+    }).toList();
+    notifyListeners();
+  }
+
+
+  /// Fetch all exams
+  Future<void> fetchExams() async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      allExams = await _examRepo.fetchExam();
+      errorMessage = null;
+    } catch (e) {
+      errorMessage = e.toString();
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+  /// Update exam
+  Future<void> updateExam() async {
+    if (updatingExamId == null) {
+      errorMessage = "Exam ID is null";
+      notifyListeners();
+      return;
+    }
+
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final updatedExam = ExamModel(
+        examId: updatingExamId,
+        courseName: examNameController.text,
+        courseId: courseIdController.text,
+        duration: getDuration(),
+        department: selectedDepartment!,
+        sem: selectedSem!,
+        date:
+            selectedDate != null
+                ? "${selectedDate!.day.toString().padLeft(2, '0')}-"
+                    "${selectedDate!.month.toString().padLeft(2, '0')}-"
+                    "${selectedDate!.year}"
+                : "",
+        createdAt: Timestamp.now(),
+        students: _students,
+        startTime: timeController.text,
+         endTime: endTimeController.text,
+      );
+
+      await _examRepo.updateExam(updatedExam);
+
+      clearData();
+      clearStudents();
+      updatingExamId = null;
+      await fetchExams();
+    } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+  /// Delete exam
+  Future<void> deleteExam(String examId) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await _examRepo.deleteExam(examId);
+      allExams.removeWhere((exam) => exam.id == examId);
+      notifyListeners();
+    } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
+  /// Clear all form data
+  void clearData() {
+    examNameController.clear();
+    courseIdController.clear();
+    timeController.clear();
+    endTimeController.clear();
+    dateController.clear();
+    selectedDepartment = null;
+    selectedSem = null;
+    selectedDate = null;
+    updatingExamId = null;
+    notifyListeners();
+  }
+}

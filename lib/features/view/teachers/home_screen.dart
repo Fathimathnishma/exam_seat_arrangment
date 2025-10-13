@@ -1,7 +1,6 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/core/utils/app_images.dart';
 import 'package:bca_exam_managment/features/view/local/localdata.dart';
-import 'package:bca_exam_managment/features/view/teachers/exam/exam_details.dart';
 import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
 import 'package:flutter/material.dart';
 
@@ -16,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
 
       body: SingleChildScrollView(
         child: Column(
@@ -137,12 +136,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, index) {
                   return InkWell(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ExamDetailScreen(),
-                        ),
-                      );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const ExamDetailScreen(exam: exams[index],),
+                      //   ),
+                      // );
                     },
                     child: MainFrame(
                       examName: exams[index]["examName"]!,

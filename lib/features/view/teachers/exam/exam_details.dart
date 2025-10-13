@@ -1,10 +1,12 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
+import 'package:bca_exam_managment/features/models/exam_model.dart';
 import 'package:bca_exam_managment/features/view/local/localdata.dart';
 import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
 import 'package:flutter/material.dart';
 
 class ExamDetailScreen extends StatefulWidget {
-  const ExamDetailScreen({super.key});
+  final ExamModel exam;
+  const ExamDetailScreen({super.key, required this.exam});
 
   @override
   State<ExamDetailScreen> createState() => _ExamDetailScreenState();
@@ -64,7 +66,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    'Exam Name:Computer Apllications',
+                    widget.exam.courseName,
                     style: TextStyle(color: AppColors.textColor, fontSize: 14),
                   ),
                 ),
@@ -86,7 +88,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            'Date:20/11/2025',
+                            widget.exam.date,
                             style: TextStyle(
                               color: AppColors.textColor,
                               fontSize: 14,
@@ -109,7 +111,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            'Time:9:00AM to 11:00Am',
+                          '${widget.exam.startTime} to ${widget.exam.endTime} ',
                             style: TextStyle(
                               color: AppColors.textColor,
                               fontSize: 14,

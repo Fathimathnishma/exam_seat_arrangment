@@ -2,15 +2,14 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Students {
-  String? id;
+class StudentsModel {
   String name;
   String regNo;
   String department;
   String sem;
   Timestamp createdAt;
-  Students({
-    this.id,
+  StudentsModel({
+  
     required this.name,
     required this.regNo,
     required this.department,
@@ -19,12 +18,11 @@ class Students {
   });
   @override
   String toString() {
-    return 'Students(id: $id, name: $name, regNo: $regNo, department: $department, sem: $sem, createdAt: $createdAt)';
+    return 'Students(name: $name, regNo: $regNo, department: $department, sem: $sem, createdAt: $createdAt)';
   }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'id': id,
       'name': name,
       'regNo': regNo,
       'department': department,
@@ -33,9 +31,8 @@ class Students {
     };
   }
 
-  factory Students.fromMap(Map<String, dynamic> map) {
-    return Students(
-      id: map['id'] != null ? map['id'] as String : null,
+  factory StudentsModel.fromMap(Map<String, dynamic> map) {
+    return StudentsModel(
       name: map['name'] as String,
       regNo: map['regNo'] as String,
       department: map['department'] as String,
@@ -46,6 +43,6 @@ class Students {
 
   String toJson() => json.encode(toMap());
 
-  factory Students.fromJson(String source) =>
-      Students.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory StudentsModel.fromJson(String source) =>
+      StudentsModel.fromMap(json.decode(source) as Map<String, dynamic>);
 }
