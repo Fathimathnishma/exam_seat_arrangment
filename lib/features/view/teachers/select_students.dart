@@ -1,123 +1,234 @@
-import 'package:bca_exam_managment/core/utils/app_colors.dart';
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:bca_exam_managment/features/view/local/localdata.dart';
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:provider/provider.dart';
 
-class SelectStudentsScreen extends StatefulWidget {
-  const SelectStudentsScreen({super.key});
+import 'package:bca_exam_managment/core/utils/app_colors.dart';
+import 'package:bca_exam_managment/features/models/exam_model.dart';
+import 'package:bca_exam_managment/features/models/room_model.dart';
+import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
+import 'package:bca_exam_managment/features/view_model/exam_viewmodel.dart';
+import 'package:bca_exam_managment/features/view_model/room_viewodel.dart';
+
+class SelectExamDemo extends StatefulWidget {
+  final String roomId;
+  const SelectExamDemo({
+    Key? key,
+    required this.roomId,
+  }) : super(key: key);
 
   @override
-  State<SelectStudentsScreen> createState() => _SelectStudentsScreenState();
+  State<SelectExamDemo> createState() => _SelectExamDemoState();
 }
 
-class _SelectStudentsScreenState extends State<SelectStudentsScreen> {
+class _SelectExamDemoState extends State<SelectExamDemo> {
+  final TextEditingController _examController = TextEditingController();
+  final TextEditingController _to = TextEditingController();
+
+  bool _showDropdown = false;
+  ExamModel? selectedExam;
+
   @override
-  final blueBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(6),
-    borderSide: BorderSide(color: AppColors.primary, width: 1),
-  );
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ExamProvider>(context, listen: false).fetchExams();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(6),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                boxShadow: [
-                  BoxShadow(color: AppColors.textColor, blurRadius: 1),
-                ],
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(Icons.arrow_back, color: AppColors.textColor),
-            ),
-          ),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Select Exam')),
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.25,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Gap(12),
-              TextFormField(
-                decoration: InputDecoration(
-                  hintText: 'select Exam ',
-                  hintStyle: TextStyle(
-                    color: AppColors.textColor,
-                    fontSize: 14,
+        padding: const EdgeInsets.all(16.0),
+        child: Consumer2<ExamProvider, RoomProvider>(
+          builder: (context, examState, roomState, child) {
+           RoomModel? room = roomState.allRooms
+    .cast<RoomModel?>()
+    .firstWhere((r) => r?.id == widget.roomId, orElse: () => null);
+
+
+            int assignedCount = 0;
+            if (selectedExam != null && room != null) {
+            assignedCount = selectedExam!.students.length - selectedExam!.duplicatestudents.length;
+                
+            }
+
+            return Column(
+              children: [
+                // 🔹 Exam selection field
+                TextFormField(
+                  controller: _examController,
+                  decoration: const InputDecoration(
+                    hintText: 'Select Exam',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.arrow_drop_down),
                   ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide(color: AppColors.primary, width: 1),
-                  ),
-                  enabledBorder: blueBorder,
-                  focusedBorder: blueBorder,
+                  readOnly: true,
+                  onTap: () {
+                    setState(() => _showDropdown = !_showDropdown);
+                  },
                 ),
-                keyboardType: TextInputType.text, // ✅ Changed to text
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        border: blueBorder,
-                        enabledBorder: blueBorder,
-                        focusedBorder: blueBorder,
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 12,
-                        ),
-                        hintText: 'from',
-                        hintStyle: TextStyle(color: AppColors.textColor),
-                      ),
+
+                // 🔹 Dropdown list
+                if (_showDropdown)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.grey.shade400),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: ListView.separated(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: examState.allExams.length,
+                      itemBuilder: (context, index) {
+                        final exam = examState.allExams[index];
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: InkWell(
+                            onTap: () {
+                              _examController.text = exam.courseName;
+                              selectedExam = exam;
+                              setState(() => _showDropdown = false);
+                            },
+                            child: MainFrame(
+                              examName: exam.courseName,
+                              examCode: exam.courseId,
+                              time: exam.startTime,
+                              sem: exam.sem,
+                            ),
+                          ),
+                        );
+                      },
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 5),
                     ),
                   ),
-                  SizedBox(width: 10), // spacing between dropdowns
-                  Expanded(
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        border: blueBorder,
-                        enabledBorder: blueBorder,
-                        focusedBorder: blueBorder,
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 12,
+
+                const SizedBox(height: 20),
+
+                // 🔹 From and To fields
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                          hintText: 'From',
+                          border: OutlineInputBorder(),
                         ),
-                        hintText: 'to',
-                        hintStyle: TextStyle(color: AppColors.textColor),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 45),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(5),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _to,
+                        decoration: const InputDecoration(
+                          hintText: 'To',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  'Save',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 20),
+
+                // 🔹 Display counts
+                if (selectedExam != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Total Students: ${selectedExam!.students.length }",
+                      ),
+                      Text(
+                        "Assigned: $assignedCount",
+                      ),
+                      Text(
+                        "Remaining: ${((selectedExam!.students.length ) - assignedCount)}",
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
+
+                const SizedBox(height: 10),
+
+                // 🔹 Save button
+                InkWell(
+                  onTap: () async {
+                    if (selectedExam != null) {
+                      await roomState.AddExamtoList(
+                        widget.roomId,
+                        selectedExam!.examId!,
+                      );
+                       if (selectedExam!.duplicatestudents.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "❌ Cannot assign this exam. No students available to assign.",
           ),
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+                      
+                      await roomState.assignStudentsToRoom(
+                        exam: selectedExam!,
+                        roomId: widget.roomId,
+                        count: int.tryParse(_to.text) ?? 10,
+                      );
+
+                      Fluttertoast.showToast(
+                        msg: "Exam and students assigned successfully ✅",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                      );
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    } else {
+                      Fluttertoast.showToast(
+                        msg: "Select an exam first",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 15,
+                      horizontal: 45,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

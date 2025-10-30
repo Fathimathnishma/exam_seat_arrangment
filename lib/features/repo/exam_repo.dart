@@ -1,4 +1,5 @@
 import 'package:bca_exam_managment/features/models/exam_model.dart';
+import 'package:bca_exam_managment/features/models/room_model.dart';
 import 'package:bca_exam_managment/features/service/exam_services.dart';
 import 'package:flutter/material.dart';
 
@@ -22,8 +23,17 @@ class ExamRepository {
     return _examService.updateExam(exam);
   }
 
+Future <List<RoomModel>> getRoomsByExamId(String examId) async {
+  return _examService.getRoomsByExamId(examId);
+  }
+Future <List<ExamModel>> fetchExamsByIds(List<String> examId) async {
+  return _examService.fetchExamsByIds(examId);
+  }
   /// Delete room
   Future<void> deleteExam(String examId) {
     return _examService.deleteExam(examId);
+  }
+   Future<void> deleteExamFromRoom(String roomId,String examId) {
+    return _examService.deleteExamFromRoom( roomId,examId );
   }
 }

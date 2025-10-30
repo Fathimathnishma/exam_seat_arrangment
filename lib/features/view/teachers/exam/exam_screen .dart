@@ -133,6 +133,7 @@ void initState() {
                           examCode: data.courseId,
                           time: data.startTime,
                           sem: data.sem,
+                          
                           onUpdate: () {
                             state.setExamForUpdate(data);
                             Navigator.push(
@@ -144,7 +145,7 @@ void initState() {
                             );
                           },
                           onDelete: () {
-                            state.deleteExam(data.id!);
+                            state.deleteExam(data.examId!);
                           },
                         ),
                       ),

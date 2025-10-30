@@ -1,12 +1,17 @@
-// MainFrame
+import 'dart:developer';
+
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
+// MainFrame
 class MainFrame extends StatefulWidget {
   final String examName;
   final String examCode;
   final String time;
   final String sem;
+
+  final bool visibleMenu; // show normal menu (update + delete)
+  final bool showDeleteOnlyMenu; // show only delete
   final VoidCallback? onUpdate;
   final VoidCallback? onDelete;
 
@@ -16,6 +21,8 @@ class MainFrame extends StatefulWidget {
     required this.examCode,
     required this.time,
     required this.sem,
+    this.visibleMenu = true,
+    this.showDeleteOnlyMenu = false,
     this.onUpdate,
     this.onDelete,
   });
@@ -46,21 +53,37 @@ class _MainFrameState extends State<MainFrame> {
                   child: Text(
                     widget.examName,
                     style: TextStyle(fontSize: 16, color: AppColors.primary, fontWeight: FontWeight.w400),
-                    maxLines: 2, // Wrap to 2 lines if too long
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Color.fromARGB(255, 47, 46, 50)),
-                  onSelected: (value) {
-                    if (value == 'update') widget.onUpdate?.call();
-                    else if (value == 'delete') widget.onDelete?.call();
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'update', child: Text('Update')),
-                    PopupMenuItem(value: 'delete', child: Text('Delete')),
-                  ],
-                ),
+
+                // Normal menu (Update + Delete)
+                if (widget.visibleMenu && !widget.showDeleteOnlyMenu)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Color.fromARGB(255, 47, 46, 50)),
+                    onSelected: (value) {
+                      if (value == 'update') widget.onUpdate?.call();
+                      else if (value == 'delete') widget.onDelete?.call();
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'update', child: Text('Update')),
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  ),
+
+                // Delete-only menu
+                if (widget.showDeleteOnlyMenu)
+                 PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Color.fromARGB(255, 47, 46, 50)),
+                    onSelected: (value) {
+                      log("only delete called");
+                     widget.onDelete?.call();
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  ),
               ],
             ),
             const SizedBox(height: 4),
@@ -80,6 +103,9 @@ class RoomFrame extends StatefulWidget {
   final String roomNo;
   final String capacity;
   final String layout;
+
+  final bool visibleMenu;
+  final bool showDeleteOnlyMenu;
   final VoidCallback? onUpdate;
   final VoidCallback? onDelete;
 
@@ -89,6 +115,8 @@ class RoomFrame extends StatefulWidget {
     required this.roomNo,
     required this.capacity,
     required this.layout,
+    this.visibleMenu = true,
+    this.showDeleteOnlyMenu = false,
     this.onUpdate,
     this.onDelete,
   });
@@ -124,17 +152,27 @@ class _RoomFrameState extends State<RoomFrame> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Color.fromARGB(255, 47, 46, 50)),
-                  onSelected: (value) {
-                    if (value == 'update') widget.onUpdate?.call();
-                    else if (value == 'delete') widget.onDelete?.call();
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'update', child: Text('Update')),
-                    PopupMenuItem(value: 'delete', child: Text('Delete')),
-                  ],
-                ),
+
+                // Normal menu
+                if (widget.visibleMenu && !widget.showDeleteOnlyMenu)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Color.fromARGB(255, 47, 46, 50)),
+                    onSelected: (value) {
+                      if (value == 'update') widget.onUpdate?.call();
+                      else if (value == 'delete') widget.onDelete?.call();
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'update', child: Text('Update')),
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  ),
+
+                // Delete-only menu
+                if (widget.showDeleteOnlyMenu)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: widget.onDelete,
+                  ),
               ],
             ),
             const SizedBox(height: 4),

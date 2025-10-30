@@ -124,7 +124,7 @@ void initState() {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => RoomDetailSrcen(),
+                            builder: (context) => RoomDetailScreen(roomModel: data,),
                           ),
                         );
                       },

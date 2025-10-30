@@ -1,4 +1,5 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
+import 'package:bca_exam_managment/features/view/teachers/profile/profile_details.dart';
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -39,9 +40,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Text("User Name", style: TextStyle(fontSize: 20)),
 
                   const SizedBox(height: 22),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: _buildProfileOption("Profile"),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileDetailsScreen(),));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: _buildProfileOption("Profile"),
+                    ),
                   ),
                   const SizedBox(height: 22),
                   Padding(

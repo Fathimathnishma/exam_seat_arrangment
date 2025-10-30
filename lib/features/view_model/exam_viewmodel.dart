@@ -1,4 +1,8 @@
+
+import 'dart:developer';
+
 import 'package:bca_exam_managment/features/models/exam_model.dart';
+import 'package:bca_exam_managment/features/models/room_model.dart';
 import 'package:bca_exam_managment/features/models/student_model.dart';
 import 'package:bca_exam_managment/features/repo/exam_repo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,7 +28,9 @@ class ExamProvider extends ChangeNotifier {
   // Date
   DateTime? selectedDate;
   List<ExamModel> allExams = [];
+  List<RoomModel>roomofExams=[];
     List<ExamModel> todaysExams = [];   
+    List<ExamModel> examinRoom = [];   
 
   // Students
   List<StudentsModel> _students = [];
@@ -39,7 +45,7 @@ class ExamProvider extends ChangeNotifier {
 
   /// Set exam for update (pre-fill form)
   void setExamForUpdate(ExamModel exam) {
-    updatingExamId = exam.id;
+    updatingExamId = exam.examId;
     examNameController.text = exam.courseName;
     courseIdController.text = exam.courseId;
     selectedDepartment = exam.department;
@@ -138,7 +144,7 @@ class ExamProvider extends ChangeNotifier {
           "${selectedDate!.day.toString().padLeft(2, '0')}-"
           "${selectedDate!.month.toString().padLeft(2, '0')}-"
           "${selectedDate!.year}";
-
+  log("1");
       final exam = ExamModel(
         examId: null,
         courseName: examNameController.text,
@@ -149,14 +155,18 @@ class ExamProvider extends ChangeNotifier {
         date: formattedDate,
         createdAt: Timestamp.now(),
         students: _students,
+        totalStudents: _students.length,
+        duplicatestudents: _students,
         startTime: timeController.text, 
         endTime: endTimeController.text, // simpl
       );
-
+  log("2");
       await _examRepo.addExam(exam);
 
       clearData();
       clearStudents();
+        log("6");
+
       await fetchExams();
     } catch (e) {
       errorMessage = e.toString();
@@ -190,6 +200,33 @@ class ExamProvider extends ChangeNotifier {
     try {
       allExams = await _examRepo.fetchExam();
       errorMessage = null;
+    } catch (e) {
+      errorMessage = e.toString();
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+ 
+ Future<void> fetchExamsbyId(List<String> examIds) async {
+    isLoading = true;
+    notifyListeners();
+    examinRoom=[];
+
+    examinRoom = await _examRepo.fetchExamsByIds(examIds);
+
+    isLoading = false;
+    notifyListeners();
+  }
+  /// Fetch rooms for  exams
+  Future<void> getRoomsByExamId(String examId) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      roomofExams = await _examRepo.getRoomsByExamId(examId);
+      log("mmmmmm12 function called");
+      log(roomofExams.length.toString());
     } catch (e) {
       errorMessage = e.toString();
     }
@@ -244,6 +281,32 @@ class ExamProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void deleteExamFromRoom(String roomId, String examId) async {
+  isLoading = true;
+  notifyListeners();
+
+  try {
+     log("1");
+    // Call the service function
+    await _examRepo.deleteExamFromRoom(roomId, examId);
+    log("1");
+    // Update local state
+    final roomIndex = roomofExams.indexWhere((r) => r.id == roomId);
+    if (roomIndex != -1) {
+      roomofExams[roomIndex].exams.remove(examId);
+    }
+
+    examinRoom.removeWhere((exam) => exam.examId == examId);
+
+  } catch (e) {
+    errorMessage = e.toString();
+  } finally {
+    isLoading = false;
+    notifyListeners();
+  }
+}
+
+
   /// Delete exam
   Future<void> deleteExam(String examId) async {
     isLoading = true;
@@ -251,7 +314,7 @@ class ExamProvider extends ChangeNotifier {
 
     try {
       await _examRepo.deleteExam(examId);
-      allExams.removeWhere((exam) => exam.id == examId);
+      allExams.removeWhere((exam) => exam.examId == examId);
       notifyListeners();
     } catch (e) {
       errorMessage = e.toString();

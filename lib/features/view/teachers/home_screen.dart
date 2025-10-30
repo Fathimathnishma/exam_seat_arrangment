@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: MediaQuery.sizeOf(context).height * 0.2,
+              height: MediaQuery.sizeOf(context).height * 0.23,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: AppColors.primary,
@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 3),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -78,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               fillColor: Colors.white,
                             ),
+                            
                           ),
                         ),
                         const SizedBox(width: 6),

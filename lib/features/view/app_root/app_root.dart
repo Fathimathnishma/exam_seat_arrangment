@@ -3,7 +3,7 @@ import 'package:bca_exam_managment/core/utils/app_images.dart';
 import 'package:bca_exam_managment/features/view/teachers/exam/add_exam_sreens.dart';
 import 'package:bca_exam_managment/features/view/teachers/exam/exam_screen%20.dart';
 import 'package:bca_exam_managment/features/view/teachers/home_screen.dart';
-import 'package:bca_exam_managment/features/view/teachers/profile_screen.dart';
+import 'package:bca_exam_managment/features/view/teachers/profile/profile_screen.dart';
 import 'package:bca_exam_managment/features/view/teachers/rooms/add_rooms.dart';
 import 'package:bca_exam_managment/features/view/teachers/rooms/all_room.dart';
 import 'package:flutter/material.dart';
