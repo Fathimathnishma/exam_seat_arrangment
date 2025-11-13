@@ -1,6 +1,5 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
-import 'package:bca_exam_managment/features/view/teachers/home_screen.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +17,7 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
 
   final OutlineInputBorder blueBorder = OutlineInputBorder(
     borderRadius: BorderRadius.circular(6),
-    borderSide: BorderSide(color: Colors.blue, width: 1.5),
+    borderSide: const BorderSide(color: Colors.blue, width: 1.5),
   );
 
   @override
@@ -27,22 +26,13 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: InkWell(
             onTap: () => Navigator.pop(context),
             borderRadius: BorderRadius.circular(6),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.background,
-
-                boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 1)],
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(Icons.arrow_back, color: AppColors.textColor),
-            ),
+            child: Icon(Icons.arrow_back, color: AppColors.textColor),
           ),
         ),
       ),
@@ -50,110 +40,116 @@ class _TeacherLoginScreenState extends State<TeacherLoginScreen> {
         padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
         child: Consumer<AuthProvider>(
           builder: (context, state, child) {
-            return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Text(
-                  "Teacher Authentication",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 26,
-                    color: AppColors.textColor,
-                  ),
-                ),
-              ),
-              SizedBox(height: 44),
-          
-              // Register Number
-              Text(" Email id:", style: TextStyle(fontWeight: FontWeight.w600)),
-              SizedBox(height: 5),
-              TextFormField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  hintText: 'Please Enter your Email id',
-                  hintStyle: TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
-                  border: blueBorder,
-                  enabledBorder: blueBorder,
-                  focusedBorder: blueBorder,
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 20),
-          
-              // Department
-              Text('Password:', style: TextStyle(fontWeight: FontWeight.w600)),
-              SizedBox(height: 5),
-              TextFormField(
-                controller: passwordController,
-                decoration: InputDecoration(
-                  hintText: 'Please Enter your Password:',
-                  hintStyle: TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
-                  border: blueBorder,
-                  enabledBorder: blueBorder,
-                  focusedBorder: blueBorder,
-                ),
-                keyboardType: TextInputType.number,
-              ),
-          
-              SizedBox(height: 50),
-              Center(
-                child: Text(
-                  'Please Enter your registered Email ID\n and your Secure Password',
-          
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-              SizedBox(
-                height: MediaQuery.sizeOf(context).height * 0.3,
-              ), // replaces Spacer()
-              // Button
-              Center(
-                child: InkWell(
-                  onTap: () {
-                    if (emailController.text.isEmpty ||
-                        passwordController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please fill all fields')),
-                      );
-                      state.login(emailController.text, passwordController.text);
-                      
-                    } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AppRoot()),
-                    );
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 45),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
+            // ✅ If loading, show progress indicator
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
                     child: Text(
-                      'Submit',
+                      "Teacher Authentication",
                       style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 26,
+                        color: AppColors.textColor,
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 44),
+
+                  // Email Field
+                  const Text("Email ID:", style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 5),
+                  TextFormField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      hintText: 'Please enter your email ID',
+                      hintStyle: const TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      border: blueBorder,
+                      enabledBorder: blueBorder,
+                      focusedBorder: blueBorder,
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Password Field
+                  const Text('Password:', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 5),
+                  TextFormField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Please enter your password',
+                      hintStyle: const TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      border: blueBorder,
+                      enabledBorder: blueBorder,
+                      focusedBorder: blueBorder,
+                    ),
+                  ),
+
+                  const SizedBox(height: 50),
+                  const Center(
+                    child: Text(
+                      'Please enter your registered Email ID\nand your secure Password',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.sizeOf(context).height * 0.3),
+
+                  // Submit Button
+                  Center(
+                    child: InkWell(
+                      onTap: () async {
+                        final email = emailController.text.trim();
+                        final password = passwordController.text.trim();
+
+                        if (email.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please fill all fields')),
+                          );
+                          return;
+                        }
+
+                        await state.login(email, password);
+
+                        if (!mounted) return; // ✅ Prevent context error
+
+                        if (state.currentUser != null) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AppRoot()),
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 45),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          'Submit',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          );
+            );
           },
-          
         ),
       ),
     );

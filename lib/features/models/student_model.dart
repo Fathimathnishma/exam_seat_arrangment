@@ -1,3 +1,4 @@
+// students_model.dart
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -6,9 +7,7 @@ class StudentsModel {
   final String regNo;
   final String department;
   final String sem;
-  final String? seatNo;
-  final String? roomNo;
-  final String? roomName;
+  
   final Timestamp createdAt;
 
   StudentsModel({
@@ -16,49 +15,42 @@ class StudentsModel {
     required this.regNo,
     required this.department,
     required this.sem,
-    this.seatNo,
-    this.roomNo,
-    this.roomName,
+ 
     required this.createdAt,
   });
 
-  @override
-  String toString() {
-    return 'StudentsModel(name: $name, regNo: $regNo, department: $department, sem: $sem, seatNo: $seatNo, roomNo: $roomNo, roomName: $roomName, createdAt: $createdAt)';
-  }
-
-  /// Convert to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'regNo': regNo,
       'department': department,
       'sem': sem,
-      'seatNo': seatNo,
-      'roomNo': roomNo,
-      'roomName': roomName,
+    
       'createdAt': createdAt,
     };
   }
 
-  /// Create model from Firestore map
   factory StudentsModel.fromMap(Map<String, dynamic> map) {
     return StudentsModel(
-      name: map['name'] ?? '',
-      regNo: map['regNo'] ?? '',
-      department: map['department'] ?? '',
-      sem: map['sem'] ?? '',
-      seatNo: map['seatNo'],
-      roomNo: map['roomNo'],
-      roomName: map['roomName'],
+      name: _safeString(map['name']),
+      regNo: _safeString(map['regNo']),
+      department: _safeString(map['department']),
+      sem: _safeString(map['sem']),
+  
       createdAt: map['createdAt'] ?? Timestamp.now(),
     );
   }
 
-  /// Convert to JSON string
-  String toJson() => json.encode(toMap());
+  static String _safeString(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    return value.toString();
+  }
 
-  /// Create model from JSON string
+  String toJson() => json.encode(toMap());
   factory StudentsModel.fromJson(String source) =>
-      StudentsModel.fromMap(json.decode(source) as Map<String, dynamic>);
+      StudentsModel.fromMap(json.decode(source));
+
+  @override
+  String toString() => 'Student($name - $regNo)';
 }

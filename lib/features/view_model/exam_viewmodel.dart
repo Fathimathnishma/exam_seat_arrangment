@@ -7,6 +7,7 @@ import 'package:bca_exam_managment/features/models/student_model.dart';
 import 'package:bca_exam_managment/features/repo/exam_repo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ExamProvider extends ChangeNotifier {
   final ExamRepository _examRepo;
@@ -25,12 +26,19 @@ class ExamProvider extends ChangeNotifier {
   String? selectedDepartment;
   String? selectedSem;
 
+  //search and filter
+   String? selectedCategory;
+  String searchText = "";
+
+
   // Date
   DateTime? selectedDate;
   List<ExamModel> allExams = [];
   List<RoomModel>roomofExams=[];
     List<ExamModel> todaysExams = [];   
     List<ExamModel> examinRoom = [];   
+    List<ExamModel> filteredExams = [];   
+    
 
   // Students
   List<StudentsModel> _students = [];
@@ -43,6 +51,80 @@ class ExamProvider extends ChangeNotifier {
   // Update tracking
   String? updatingExamId; // ✅ null = add, not null = update
 
+  void onTodaySearchChanged(String? value) {
+  searchText = value?.trim().toLowerCase() ?? "";
+  filterTodayExams();
+}
+
+void filterTodayExams() {
+  final today = DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+  todaysExams = allExams.where((exam) {
+    final isToday = exam.date == today;
+
+    final matchesDepartment =
+        selectedCategory == null || selectedCategory == "All"
+            ? true
+            : (exam.department?.toLowerCase() ?? "") ==
+                selectedCategory!.toLowerCase();
+
+    final matchesSearch = searchText.isEmpty
+        ? true
+        : exam.courseName.toLowerCase().contains(searchText) ||
+            exam.courseId.toLowerCase().contains(searchText) ||
+            (exam.department?.toLowerCase() ?? "").contains(searchText);
+
+    return isToday && matchesDepartment && matchesSearch;
+  }).toList();
+
+  notifyListeners();
+}
+
+
+
+void getTodayExams() {
+  final today = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  todaysExams = allExams.where((exam) => exam.date == today).toList();
+  notifyListeners();
+}
+void onSearchChanged(String? value) {
+  searchText = value?.trim().toLowerCase() ?? "";
+  filterExams();
+}
+void filterExams() {
+  
+  filteredExams = allExams.where((event) {
+    final matchesDepartment =
+        selectedCategory == null || selectedCategory == "All"
+            ? true
+            : (event.department?.toLowerCase() ?? "") ==
+                selectedCategory!.toLowerCase();
+
+    final matchesSearch = searchText.isEmpty
+        ? true
+        : event.courseName.toLowerCase().contains(searchText) ||
+            event.courseId.toLowerCase().contains(searchText) ||
+            (event.date.toLowerCase().contains(searchText)) ||
+            (event.department?.toLowerCase() ?? "").contains(searchText);
+
+    return matchesDepartment && matchesSearch;
+  }).toList();
+
+  // Optional: Only reset when both filters are empty
+  if (filteredExams.isEmpty && searchText.isEmpty && (selectedCategory == null || selectedCategory == "All")) {
+    filteredExams = List.from(allExams);
+  }
+
+  notifyListeners();
+}
+
+
+
+  // // Handle search input change
+  // void onSearchChanged(String? value) {
+  //   searchText = value?.trim().toLowerCase() ?? "";
+  //   filterEvents();
+  // }
   /// Set exam for update (pre-fill form)
   void setExamForUpdate(ExamModel exam) {
     updatingExamId = exam.examId;
@@ -198,7 +280,9 @@ class ExamProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      allExams=[];
       allExams = await _examRepo.fetchExam();
+       filteredExams= List.from(allExams);
       errorMessage = null;
     } catch (e) {
       errorMessage = e.toString();
@@ -272,6 +356,8 @@ class ExamProvider extends ChangeNotifier {
       clearStudents();
       updatingExamId = null;
       await fetchExams();
+      filterExams();
+
     } catch (e) {
       errorMessage = e.toString();
       notifyListeners();
@@ -315,7 +401,8 @@ class ExamProvider extends ChangeNotifier {
     try {
       await _examRepo.deleteExam(examId);
       allExams.removeWhere((exam) => exam.examId == examId);
-      notifyListeners();
+     filterExams();
+
     } catch (e) {
       errorMessage = e.toString();
       notifyListeners();

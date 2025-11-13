@@ -19,21 +19,21 @@ class OnboardingModel {
 class OnboardingLocalData {
   static List<OnboardingModel> list = [
     OnboardingModel(
-      title: 'Find your  Exam\n Class here',
+      title: 'Simplify Exam Seating Management',
       description:
-          'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.',
+          'Let technology handle it all. The app ensures every student gets the right spot — no overlaps, no mix-ups, just a fair plan every time.',
       image: AppImages.onbording_1,
     ),
     OnboardingModel(
-      title: 'Make Payment',
+      title: 'Automatic & Error-Free Seat Allocation',
       description:
-          'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.',
+          'Sit back and let the app handle it. Every student gets the right spot — no overlaps, no mix-ups, just a fair setup every time',
       image: AppImages.onbording_2,
     ),
     OnboardingModel(
-      title: 'Get Your Order',
+      title: 'Real-Time Access for Students & Staff',
       description:
-          'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.',
+          'Let the app do the work. Students get the right spot — no overlaps, no mix-ups, just a fair plan every time.',
       image: AppImages.onbording_3,
     ),
   ];

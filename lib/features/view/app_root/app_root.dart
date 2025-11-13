@@ -32,27 +32,26 @@ class _AppRootState extends State<AppRoot> {
     return Scaffold(
       body: _pages[_selectedIndex],
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton:
-          showFab
-              ? FloatingActionButton(
-                backgroundColor: AppColors.primary,
-                shape: CircleBorder(),
-                onPressed: () {
-                  if (_selectedIndex == 1) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AddExamScreens()),
-                    );
-                  } else if (_selectedIndex == 2) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AddRoomsScreen()),
-                    );
-                  }
-                },
-                child: const Icon(Icons.add, color: Colors.white),
-              )
-              : null, // hide FAB completely
+      floatingActionButton: showFab
+          ? FloatingActionButton(
+              backgroundColor: AppColors.primary,
+              shape: const CircleBorder(),
+              onPressed: () {
+                if (_selectedIndex == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddExamScreens()),
+                  );
+                } else if (_selectedIndex == 2) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddRoomsScreen()),
+                  );
+                }
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null, // hide FAB completely
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(25),
@@ -66,51 +65,54 @@ class _AppRootState extends State<AppRoot> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              InkWell(
-                onTap: () => setState(() => _selectedIndex = 0),
-                child: SizedBox(
-                  height: 25,
-                  width: 25,
-                  child:
-                      _selectedIndex == 0
-                          ? Image.asset(AppImages.homeActive)
-                          : Image.asset(AppImages.home),
-                ),
+              _navItem(
+                index: 0,
+                activeIcon: AppImages.homeActive,
+                inactiveIcon: AppImages.home,
+              ),
+              _navItem(
+                index: 1,
+                activeIcon: AppImages.examActive,
+                inactiveIcon: AppImages.exam,
               ),
 
-              InkWell(
-                onTap: () => setState(() => _selectedIndex = 1),
-                child: SizedBox(
-                  height: 25,
-                  width: 25,
-                  child:
-                      _selectedIndex == 1
-                          ? Image.asset(AppImages.examActive)
-                          : Image.asset(AppImages.exam),
-                ),
-              ),
-              SizedBox(width: showFab ? 40 : 0), // space for FAB
+              // 🔹 Only show spacing when FAB is visible
+              if (showFab) const SizedBox(width: 40),
+
               IconButton(
                 icon: Icon(
                   Icons.location_on,
-                  color:
-                      _selectedIndex == 2 ? AppColors.primary : AppColors.black,
+                  color: _selectedIndex == 2
+                      ? AppColors.primary
+                      : AppColors.black,
                 ),
                 onPressed: () => setState(() => _selectedIndex = 2),
               ),
-              InkWell(
-                onTap: () => setState(() => _selectedIndex = 3),
-                child: SizedBox(
-                  height: 25,
-                  width: 25,
-                  child:
-                      _selectedIndex == 3
-                          ? Image.asset(AppImages.profileActive)
-                          : Image.asset(AppImages.profile),
-                ),
+              _navItem(
+                index: 3,
+                activeIcon: AppImages.profileActive,
+                inactiveIcon: AppImages.profile,
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Custom widget for navigation icons (for cleaner code)
+  Widget _navItem({
+    required int index,
+    required String activeIcon,
+    required String inactiveIcon,
+  }) {
+    return InkWell(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: SizedBox(
+        height: 25,
+        width: 25,
+        child: Image.asset(
+          _selectedIndex == index ? activeIcon : inactiveIcon,
         ),
       ),
     );

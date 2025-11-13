@@ -7,7 +7,7 @@ class AuthRepository {
   AuthRepository(this._authService);
 
   Future<UserModel?> addUser(UserModel user) {
-    return _authService.signUpWithEmail(userModel: user);
+    return _authService.addUserByAdmin(userModel: user);
   }
 
   Future<UserModel?> login(String email, String password) {
@@ -18,12 +18,28 @@ class AuthRepository {
     return _authService.logout();
   }
 
-  Future<void> deleteAccount() {
-    return _authService.deleteUserAccount();
+  Future<void> deleteAccount(String userId) {
+    return _authService.deleteUserAccount(userId);
   }
 
   /// 🔹 Fetch current user if logged in
   Future<UserModel?> fetchCurrentUser() {
     return _authService.fetchCurrentUser();
   }
+  //fetch all users
+  Future<List<UserModel>> fetchAllUsers() {
+    return _authService.fetchAllUsers();
+  }
+  /// fetch students detail
+  Future<Map<String, dynamic>?> fetchSeatAndRoom({
+    required String regNo,
+    required String department,
+    required DateTime todayDate,
+  }) async {
+    return await _authService.getSeatAndRoomDetails(
+      regNo: regNo,
+      department: department,
+      todayDate: todayDate,
+    );
+}
 }

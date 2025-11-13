@@ -17,4 +17,10 @@ class AppImages {
   static String filter_blue = "assets/images/filter_blue.png";
   static String filter = "assets/images/filter.png";
   static String upload = "assets/images/upload.png";
+  static String noData = "assets/images/no-data.png";
+
+  //settings
+   static String whatsapp = "assets/images/logos_whatsapp-icon_review.png";
+   static String phone = "assets/images/phone_icon.jpg";
+   static String email = "assets/images/gmail_reivew_icons.png";
 }

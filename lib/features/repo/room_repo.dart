@@ -21,6 +21,9 @@ class RoomRepository {
   Future<void> updateRoom(RoomModel room) {
     return _roomService.updateRoom(room);
   }
+  Future<RoomModel> getRoomById(String roomId) {
+    return _roomService.getRoomById(roomId);
+  }
 //assignStudentsToRoom
 Future<void> assignStudentsToRoom({
     required ExamModel exam,

@@ -59,16 +59,7 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
               child: InkWell(
                 onTap: () => Navigator.pop(context),
                 borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    boxShadow: [
-                      BoxShadow(color: AppColors.textColor, blurRadius: 1),
-                    ],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(Icons.arrow_back, color: AppColors.textColor),
-                ),
+                child: Icon(Icons.arrow_back, color: AppColors.textColor),
               ),
             ),
           ),
@@ -76,41 +67,71 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
             child: Form(
               key: _formKey,
-              child: SizedBox(
-                height: MediaQuery.sizeOf(context).height * 0.45,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Gap(12),
-
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height*0.2,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                        
+                  
                     // Room Name
-                    TextFormField(
-                      controller: state.roomName,
-                      decoration: InputDecoration(
-                        hintText: 'Room Name:',
-                        hintStyle: TextStyle(
-                          color: AppColors.textColor,
-                          fontSize: 14,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 12,
-                        ),
-                        border: blueBorder,
-                        enabledBorder: blueBorder,
-                        focusedBorder: blueBorder,
+                   DropdownButtonFormField<String>(
+                    value:  (state.roomName != null &&
+                            ['Auditorium Block', 'Library Block', 'PG Block', 'Main Block']
+                                .contains(state.roomName))
+                        ? state.roomName
+                        : null, // your controller variable
+                    decoration: InputDecoration(
+                      hintText: 'Block Name:',
+                      hintStyle: TextStyle(
+                        color: AppColors.textColor,
+                        fontSize: 14,
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Room name cannot be empty';
-                        }
-                        return null;
-                      },
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
+                      border: blueBorder,
+                      enabledBorder: blueBorder,
+                      focusedBorder: blueBorder,
                     ),
-
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Auditorium Block',
+                        child: Text('Auditorium Block'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Library Block',
+                        child: Text('Library Block'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'PG Block',
+                        child: Text('PG Block'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Main Block',
+                        child: Text('Main Block'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      state.roomName= value; // update selected block
+                    },
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please select a block name';
+                      }
+                      return null;
+                    },
+                  ),
+                  
+                  
                     // Room Code
                     TextFormField(
                       controller: state.roomCode,
+                      textCapitalization: TextCapitalization.characters,
                       decoration: InputDecoration(
                         hintText: 'Room Code:',
                         hintStyle: TextStyle(
@@ -132,7 +153,7 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
                         return null;
                       },
                     ),
-
+                  
                     // Layout & Capacity
                     Row(
                       children: [
@@ -173,7 +194,7 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
                           ),
                         ),
                         const SizedBox(width: 10),
-
+                      
                         // Capacity Input
                         Expanded(
                           child: TextFormField(
@@ -202,49 +223,54 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
                         ),
                       ],
                     ),
-
-                    // Submit Button
-                    InkWell(
-                      onTap: () async {
-                        if (_formKey.currentState!.validate()) {
-                          await state.saveRoom();
-
-                          // ✅ Show toast message after successful add/update
-                          Fluttertoast.showToast(
-                            msg: widget.room == null
-                                ? "Room Added Successfully ✅"
-                                : "Room Updated Successfully ✅",
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.BOTTOM,
-                            backgroundColor: Colors.green,
-                            textColor: Colors.white,
-                            fontSize: 16.0,
-                          );
-
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                          horizontal: 45,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          widget.room == null ? 'Add Room' : 'Update Room',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
+                  
+                    ],
+                  ),
+                ),
+                 Gap(10),
+                 Gap(10),
+                  // Submit Button
+                  InkWell(
+                    onTap: () async {
+                      if (_formKey.currentState!.validate()) {
+                        await state.saveRoom();
+              
+                        // ✅ Show toast message after successful add/update
+                        Fluttertoast.showToast(
+                          msg: widget.room == null
+                              ? "Room Added Successfully ✅"
+                              : "Room Updated Successfully ✅",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.BOTTOM,
+                          backgroundColor: Colors.green,
+                          textColor: Colors.white,
+                          fontSize: 16.0,
+                        );
+              
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                        horizontal: 45,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        widget.room == null ? 'Add Room' : 'Update Room',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.white,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                 
+                ],
               ),
             ),
           ),

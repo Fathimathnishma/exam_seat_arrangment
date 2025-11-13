@@ -46,12 +46,36 @@ class RoomService {
 
   Future<void> updateRoom(RoomModel roomModel) async {
     try {
+      log("updating1");
       await firebase.doc(roomModel.id).update(roomModel.toMap());
+            log("updating2");
+
       log("Room updated successfully: ${roomModel.id}");
     } catch (e) {
       log("Error while updating room: $e");
     }
   }
+  Future<RoomModel> getRoomById(String roomId) async {
+  try {
+    final doc = await firebase.doc(roomId).get();
+    if (!doc.exists) {
+      throw Exception("Room not found for ID: $roomId");
+    }
+
+    final data = doc.data() as Map<String, dynamic>;
+    data['id'] = doc.id; // ✅ include Firestore doc ID
+
+    final roomModel = RoomModel.fromMap(data);
+
+    log("✅ Room fetched successfully: ${roomModel.id}");
+    return roomModel;
+  } catch (e) {
+    log("❌ Error while fetching room: $e");
+    rethrow;
+  }
+}
+
+
 
   Future<void> deleteRoom(String roomId) async {
     try {
@@ -133,6 +157,13 @@ Future<void> assignStudentsToRoom({
   log("✅ Students assigned successfully!");
   log("=== assignStudentsToRoom END ===");
 }
+
+
+
+
+/////////////////////////////////
+
+
 
  Future<void> addExamToRoom(String roomId, String examId) async {
   try {

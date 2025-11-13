@@ -14,18 +14,22 @@ class RoomProvider extends ChangeNotifier {
   RoomProvider(this._roomRepo);
 
   List<RoomModel> allRooms = [];
- final allSeats = <Map<String, dynamic>>[];
+  List<RoomModel> filteredRooms = [];
 
   bool isLoading = false;
   String? errorMessage;
 
   // CONTROLLERS
-  TextEditingController roomName = TextEditingController();
+  String? roomName;
   TextEditingController roomCode = TextEditingController();
   TextEditingController capacity = TextEditingController();
 
   // Layout dropdown selection
   String? selectedLayout;
+
+  // Search and filter
+  String? selectedCategory;
+  String searchText = "";
 
   // To track whether we are updating an existing room
   String? updatingRoomId;
@@ -37,6 +41,7 @@ class RoomProvider extends ChangeNotifier {
 
     try {
       allRooms = await _roomRepo.fetchRooms();
+      filteredRooms = List.from(allRooms);
       errorMessage = null;
     } catch (e) {
       errorMessage = e.toString();
@@ -46,12 +51,48 @@ class RoomProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Search functions
+  void onSearchChanged(String? value) {
+    searchText = value?.trim().toLowerCase() ?? "";
+    filterExams();
+  }
+
+  void filterExams() {
+    filteredRooms = allRooms.where((event) {
+      final matchesName =
+          selectedCategory == null || selectedCategory == "All"
+              ? true
+              : (event.roomName?.toLowerCase() ?? "") ==
+                  selectedCategory!.toLowerCase();
+
+      final matchesCode = searchText.isEmpty
+          ? true
+          : event.roomName!.toLowerCase().contains(searchText) ||
+              event.roomNo.toLowerCase().contains(searchText);
+
+      return matchesName && matchesCode;
+    }).toList();
+
+    // Reset when filters are empty
+    if (filteredRooms.isEmpty &&
+        searchText.isEmpty &&
+        (selectedCategory == null || selectedCategory == "All")) {
+      filteredRooms = List.from(allRooms);
+    }
+
+    notifyListeners();
+  }
+
+  String getAvailability(int capacity) {
+    return capacity > 0 ? 'Available' : 'Not Available';
+  }
+
   /// Pre-fill controllers for updating
   void setRoomForUpdate(RoomModel room) {
     updatingRoomId = room.id;
-    roomName.text = room.roomName ?? '';
+    roomName = room.roomName ?? '';
     roomCode.text = room.roomNo;
-    selectedLayout = room.layout; // ✅ pre-fill dropdown
+    selectedLayout = room.layout; // pre-fill dropdown
     capacity.text = room.capacity.toString();
     notifyListeners();
   }
@@ -59,9 +100,9 @@ class RoomProvider extends ChangeNotifier {
   /// Create RoomModel from controllers
   RoomModel get roomFromControllers => RoomModel(
         id: updatingRoomId,
-        roomName: roomName.text.trim(),
+        roomName: roomName!.trim(),
         roomNo: roomCode.text.trim(),
-        layout: selectedLayout ?? '', // ✅ use dropdown value
+        layout: selectedLayout ?? '',
         capacity: int.tryParse(capacity.text.trim()) ?? 0,
         createdAt: Timestamp.now(),
       );
@@ -100,7 +141,7 @@ class RoomProvider extends ChangeNotifier {
     }
   }
 
-  //addexamlist
+  // Add exam to room
   Future<void> AddExamtoList(String roomId, String examId) async {
     try {
       isLoading = true;
@@ -114,38 +155,189 @@ class RoomProvider extends ChangeNotifier {
       errorMessage = e.toString();
       notifyListeners();
     }
-    fetchRooms();
+    await fetchRooms();
     isLoading = false;
     notifyListeners();
   }
 
-  //add students
-  Future<void> assignStudentsToRoom({
-    required ExamModel exam,
-    required String roomId,
-    required int count,
-  }) async {
-    isLoading = true;
-    notifyListeners();
-    try {
-      final selectedStudents = exam.duplicatestudents.take(count).toList();
-      checkAlreadyAssignedStudents(
-          selectedStudents: selectedStudents,
-          examId: exam.examId!,
-          currentRoomId: roomId);
-      await _roomRepo.assignStudentsToRoom(
-        exam: exam,
-        roomId: roomId,
-        count: count,
-      );
-      await arrangeSeatsWithColors();
-      await fetchRooms();
-    } catch (e) {
-      errorMessage = e.toString();
-    }
-    isLoading = false;
-    notifyListeners();
+
+
+Future<Map<String, dynamic>> checkRoomAvailability({
+  required RoomModel room,
+  required ExamModel exam,
+  required int count,
+  String? currentRoomId,
+}) async {
+  final int totalSeats = room.capacity;
+  final int assigned = room.allSeats.length;
+  final int availableSeats = totalSeats - assigned;
+
+  final result = <String, dynamic>{
+    'totalSeats': totalSeats,
+    'alreadyAssigned': assigned,
+    'availableSeats': availableSeats,
+  };
+
+  // 🔹 Safe exam student list
+  final availableExamStudents = exam.duplicatestudents ?? [];
+  if (availableExamStudents.isEmpty) {
+    result['status'] = false;
+    result['message'] = '❌ No students available in this exam to assign.';
+    return result;
   }
+
+  // 🔹 Validate count vs available
+  if (count <= 0) {
+    result['status'] = false;
+    result['message'] = '⚠️ Invalid student count: $count';
+    return result;
+  }
+
+  if (count > availableExamStudents.length) {
+    result['status'] = false;
+    result['message'] =
+        '⚠️ Requested $count students, but only ${availableExamStudents.length} available.';
+    return result;
+  }
+
+  // 🔹 Select and deduplicate students
+  final selectedStudents = availableExamStudents.take(count).toList();
+  final uniqueStudents = {
+    for (var s in selectedStudents.where((s) => s.regNo != null)) s.regNo!: s
+  }.values.toList();
+  final newStudentCount = uniqueStudents.length;
+
+  // 🔹 Already assigned in this room
+  final assignedRegNos = room.allSeats
+      .map((s) => (s['student'] as StudentsModel?)?.regNo)
+      .whereType<String>()
+      .toSet();
+
+  final inThisRoomDuplicates =
+      uniqueStudents.where((s) => assignedRegNos.contains(s.regNo)).toList();
+
+  // 🔹 Already assigned in other rooms
+  final alreadyAssignedElsewhere = <StudentsModel>[];
+  for (final student in uniqueStudents) {
+    final isAssignedElsewhere = allRooms.any((otherRoom) {
+      if (otherRoom.id == currentRoomId) return false;
+      final assignedList = otherRoom.membersInRoom[exam.examId] ?? [];
+      return assignedList.any((s) => s.regNo == student.regNo);
+    });
+    if (isAssignedElsewhere) alreadyAssignedElsewhere.add(student);
+  }
+
+  result['examStudentCount'] = newStudentCount;
+  result['inThisRoomDuplicates'] =
+      inThisRoomDuplicates.map((e) => e.name).toList();
+  result['alreadyAssignedElsewhere'] =
+      alreadyAssignedElsewhere.map((e) => e.name).toList();
+
+  // 🔹 Determine final status
+  if (availableSeats <= 0) {
+    result['status'] = false;
+    result['message'] =
+        '❌ Room ${room.roomNo} is full ($assigned/$totalSeats).';
+  } else if (newStudentCount > availableSeats) {
+    result['status'] = false;
+    result['message'] =
+        '⚠️ Only $availableSeats seats left, but trying to assign $newStudentCount students.';
+  } else if (inThisRoomDuplicates.isNotEmpty) {
+    result['status'] = false;
+    result['message'] =
+        '⚠️ ${inThisRoomDuplicates.length} students already assigned in this room.';
+  } else if (alreadyAssignedElsewhere.isNotEmpty) {
+    result['status'] = false;
+    result['message'] =
+        '⚠️ ${alreadyAssignedElsewhere.length} students already assigned in other rooms.';
+  } else {
+    result['status'] = true;
+    result['message'] =
+        '✅ Room has $availableSeats seats available. Ready to assign $newStudentCount students.';
+  }
+
+  return result;
+}
+
+
+
+  // Add students
+Future<void> assignStudentsToRoom({
+  required ExamModel exam,
+  required String roomId,
+  required int count,
+}) async {
+  isLoading = true;
+  notifyListeners();
+
+  try {
+    log("🟢 Starting assignment for Room ID: $roomId");
+
+    // 1️⃣ Assign selected students to Firebase (updates membersInRoom)
+    await _roomRepo.assignStudentsToRoom(
+      exam: exam,
+      roomId: roomId,
+      count: count,
+    );
+
+    // 2️⃣ Fetch the latest room data
+    RoomModel updatedRoom = await _roomRepo.getRoomById(roomId);
+    log("✅ Room fetched: ${updatedRoom.roomNo}, capacity: ${updatedRoom.capacity}");
+
+    // 3️⃣ Arrange seats (ensure safe data structure)
+    final arrangement = arrangeSeatsWithColors(
+      Map<String, List<StudentsModel>>.from(updatedRoom.membersInRoom),
+      updatedRoom.capacity,
+      room: updatedRoom,
+    );
+
+    // 4️⃣ Log the arrangement locally
+    log("🪑 Local seat arrangement:");
+    for (var seat in arrangement['seats']) {
+      log("   Seat -> Exam: ${seat['exam']}, "
+          "Student: ${seat['student']?['name'] ?? 'null'}, "
+          "Color: ${seat['color']}");
+    }
+
+    // 5️⃣ Convert Color to int and StudentModel to map
+    final safeSeats = (arrangement['seats'] as List)
+        .map((seat) => {
+              'exam': seat['exam'] ?? 'Empty',
+              'color': (seat['color'] is Color)
+                  ? (seat['color'] as Color).value
+                  : seat['color'] ?? 0xFFBDBDBD, // grey fallback
+              'student': (seat['student'] is StudentsModel)
+                  ? (seat['student'] as StudentsModel).toMap()
+                  : seat['student'], // may already be null or map
+            })
+        .toList();
+
+    updatedRoom = updatedRoom.copyWith(allSeats: safeSeats);
+
+    // 6️⃣ Log after conversion
+    log("📦 Prepared ${safeSeats.length} safe seat maps to update Firestore");
+
+    // 7️⃣ Push updated data safely
+    await _roomRepo.updateRoom(updatedRoom);
+    log("✅ Room update success: ${updatedRoom.id}");
+
+    // 8️⃣ Refresh rooms
+    await fetchRooms();
+  } catch (e, st) {
+    log("❌ ERROR during assignStudentsToRoom: $e");
+    log("🪲 StackTrace: $st");
+    errorMessage = e.toString();
+    Fluttertoast.showToast(msg: "❌ $errorMessage");
+  }
+
+  isLoading = false;
+  notifyListeners();
+}
+
+
+
+
+
 
   void deleteRoom(String roomId) async {
     try {
@@ -156,37 +348,14 @@ class RoomProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
  
 
-  void checkAlreadyAssignedStudents({
-    required List<StudentsModel> selectedStudents,
-    required String examId,
-    String? currentRoomId,
-  }) {
-    for (final student in selectedStudents) {
-      final isAssigned = allRooms.any((room) {
-        if (room.id == currentRoomId) return false; // skip current room
-        final examStudents = room.membersInRoom[examId] ?? [];
-        return examStudents.any((s) => s.regNo == student.regNo);
-      });
-
-      if (isAssigned) {
-        Fluttertoast.showToast(
-          msg: "Check again — some of the selected students are already assigned.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
-        return; // stop after first duplicate found
-      }
-    }
-  }
-
-
   void clearControllers() {
-    roomName.clear();
+    roomName = "";
     roomCode.clear();
     capacity.clear();
-    selectedLayout = null; // ✅ reset dropdown
+    selectedLayout = null;
     updatingRoomId = null;
   }
 
@@ -197,98 +366,65 @@ class RoomProvider extends ChangeNotifier {
     clearControllers();
     notifyListeners();
   }
-//arange seats
 
-List<Map<String, dynamic>> arrangeSeatsWithColors(
+  // Arrange seats
+  String warningMessage = '';
+Map<String, dynamic> arrangeSeatsWithColors(
   Map<String, List<StudentsModel>> examStudents,
-  int totalSeats,
-) {
-  final random =math. Random();
+  int totalSeats, {
+  RoomModel? room,
+}) {
+  final random = math.Random();
   final examColors = <String, Color>{};
   final allSeats = <Map<String, dynamic>>[];
+  String warningMessage = '';
 
-  // 🧠 Case 1: Only one exam
-  if (examStudents.length == 1) {
-    Fluttertoast.showToast(
-      msg: "Add more exams to arrange seats properly",
-      backgroundColor: Colors.redAccent,
-      textColor: Colors.white,
-    );
-
-    // Assign color for the single exam
-    final examId = examStudents.keys.first;
-    examColors[examId] = Colors.blueAccent;
-
-    final students = examStudents[examId] ?? [];
-
-    // Add all students of that exam
-    for (final student in students) {
-      allSeats.add({
-        'student': student,
-        'exam': examId,
-        'color': examColors[examId],
-      });
-    }
-
-    // Fill empty seats with grey
-    while (allSeats.length < totalSeats) {
-      allSeats.add({
-        'student': null,
-        'exam': null,
-        'color': Colors.grey,
-      });
-    }
-
-    return allSeats;
+  if (examStudents.isEmpty) {
+    return {'seats': [], 'message': "❌ No students found"};
+  }
+  if (totalSeats <= 0) {
+    return {'seats': [], 'message': "❌ Invalid room capacity"};
   }
 
-  // 🧠 Case 2: Multiple exams
-  // Assign random color for each exam
+  // Assign color per exam
   for (var examId in examStudents.keys) {
     examColors[examId] = Color.fromARGB(
       255,
-      100 + random.nextInt(155),
-      100 + random.nextInt(155),
-      100 + random.nextInt(155),
+      80 + random.nextInt(150),
+      80 + random.nextInt(150),
+      80 + random.nextInt(150),
     );
   }
 
-  final examNames = examStudents.keys.toList();
-  int index = 0;
-
-  // Alternate students from each exam
-  while (examStudents.values.any((s) => s.isNotEmpty)) {
-    final exam = examNames[index % examNames.length];
-    final list = examStudents[exam]!;
-
+  // Distribute fairly by alternating
+  final examQueue = examStudents.keys.toList();
+  while (examStudents.values.any((v) => v.isNotEmpty)) {
+    examQueue.sort((a, b) => examStudents[b]!.length.compareTo(examStudents[a]!.length));
+    String? current;
+    for (var e in examQueue) {
+      if (allSeats.isEmpty || allSeats.last['exam'] != e) {
+        current = e;
+        break;
+      }
+    }
+    current ??= examQueue.first;
+    final list = examStudents[current]!;
     if (list.isNotEmpty) {
       allSeats.add({
         'student': list.removeAt(0),
-        'exam': exam,
-        'color': examColors[exam],
+        'exam': current,
+        'color': examColors[current],
       });
     }
-    index++;
   }
 
-  // Fill remaining seats with grey
+  // Fill empty seats
   while (allSeats.length < totalSeats) {
-    allSeats.add({
-      'student': null,
-      'exam': null,
-      'color': Colors.grey,
-    });
+    allSeats.add({'student': null, 'exam': 'Empty', 'color': Colors.grey});
   }
 
-  return allSeats;
+  if (room != null) room.allSeats = allSeats;
+  return {'seats': allSeats, 'message': warningMessage};
 }
 
-
-
-  /// Returns total number of students in the given exam (0 if null)
-  // int totalStudentsForExam(ExamModel? exam) {
-  //   return exam?.students.length ?? 0;
-  // }
-
-  
 }

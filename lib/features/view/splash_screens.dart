@@ -1,5 +1,9 @@
+import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
 import 'package:bca_exam_managment/features/view/on_boarding/on_boarding1_sreen.dart';
+import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:bca_exam_managment/core/utils/app_colors.dart';
 
 class SplashScreens extends StatefulWidget {
   const SplashScreens({super.key});
@@ -12,78 +16,87 @@ class _SplashScreensState extends State<SplashScreens> {
   double _opacity = 0.0;
 
   @override
-  void initState() {
-    super.initState();
+  @override
+void initState() {
+  super.initState();
 
-    // Start fade-in effect
-    Future.delayed(const Duration(milliseconds: 100), () {
-      setState(() {
-        _opacity = 1.0;
-      });
-    });
+  // Fade-in immediately
+ Future.delayed(const Duration(milliseconds: 100), () {
+  if (mounted) setState(() => _opacity = 1.0);
+});
 
-    // Navigate to onboarding after delay
-    Future.delayed(const Duration(seconds: 5), () {
+// Delay navigation
+WidgetsBinding.instance.addPostFrameCallback((_) async {
+  await Future.delayed(const Duration(seconds: 3)); // splash duration
+  await _initializeApp();
+});
+
+
+}
+
+
+  Future<void> _initializeApp() async {
+  final auth = Provider.of<AuthProvider>(context, listen: false);
+
+  try {
+    auth.setTodayDate();
+
+    // Fetch current user
+    final user = await auth.checkUserStatus();
+
+    if (!mounted) return;
+
+    // Navigate based on user status
+    if (user != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AppRoot()),
+      );
+    } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const OnBoardingScreen()),
       );
-    });
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error initializing app: $e')),
+      );
+    }
   }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       body: Center(
         child: AnimatedOpacity(
-          duration: Duration(seconds: 2), // Fade-in duration
+          duration: const Duration(seconds: 2),
           opacity: _opacity,
-          child: Text("exam arrangment,", style: TextStyle(fontSize: 30)),
-          // child: Image.asset(
-          //  AppImages.eBookImage,
-          //   height: 51,
-          // )
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+            Image.asset(
+          "assets/images/app-logo.png",
+            height: 300,
+          ),
+              Text(
+                "Exam Arrangement",
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
-  //Future<void> _initializeApp() async {
-  //   // Wait for 3 seconds
-  //   await Future.delayed(const Duration(seconds: 3));
-  // if (mounted) {
-  // final location = context.read<ProperitesProvider>();
-  // final userModel = context.read<AuthenticationProvider>().userModel;
-
-  // log(userModel?.id ??
-  //     'nullrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr'.toString());
-  // log('nullrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr'.toString());
-
-  // final isReadOnBoardingScreen =
-  //     await OnboardingLocalData.getOnBoardingScreen();
-
-  // // if (!mounted) return;
-
-  // //  ON BORDING
-  // if (isReadOnBoardingScreen == false) {
-  //   Navigator.pushReplacement(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => OnBoardingScreen()),
-  //   );
-  //   //   // return;
-  // }
-
-  // //  LOGIN
-  // if (userModel == null) {
-  // EasyNavigation.pushAndRemoveUntil(
-  //   context: context,
-  //   page: const LoginScreens(),
-  // );
-  // return;
-  // }
-
-  // EasyNavigation.pushAndRemoveUntil(
-  //   context: context,
-  //   page: const AppRoot(),
-  // );
 }

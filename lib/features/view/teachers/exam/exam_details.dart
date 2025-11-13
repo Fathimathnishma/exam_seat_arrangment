@@ -47,16 +47,7 @@ void initState() {
           child: InkWell(
             onTap: () => Navigator.pop(context),
             borderRadius: BorderRadius.circular(6),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                boxShadow: [
-                  BoxShadow(color: AppColors.textColor, blurRadius: 1),
-                ],
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(Icons.arrow_back, color: AppColors.textColor),
-            ),
+            child: Icon(Icons.arrow_back, color: AppColors.textColor),
           ),
         ),
       ),

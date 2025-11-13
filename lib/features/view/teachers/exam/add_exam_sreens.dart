@@ -46,16 +46,7 @@ class AddExamScreens extends StatelessWidget {
           child: InkWell(
             onTap: () => Navigator.pop(context),
             borderRadius: BorderRadius.circular(6),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                boxShadow: [
-                  BoxShadow(color: AppColors.textColor, blurRadius: 1),
-                ],
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(Icons.arrow_back, color: AppColors.textColor),
-            ),
+            child: Icon(Icons.arrow_back, color: AppColors.textColor),
           ),
         ),
       ),
@@ -100,6 +91,7 @@ class AddExamScreens extends StatelessWidget {
                       // Exam Code (full row)
                       TextFormField(
                         controller: state.courseIdController,
+                        textCapitalization: TextCapitalization.characters,
                         decoration: InputDecoration(
                           hintText: 'Exam Code:',
                           border: blueBorder,
@@ -417,7 +409,7 @@ class AddExamScreens extends StatelessWidget {
                                   await state.updateExam();
                                   showSnackBar("Exam updated successfully!");
                                 }
-                                state.clearData();
+                                
                                 Navigator.pop(context);
                               }
                             },
@@ -461,4 +453,4 @@ class AddExamScreens extends StatelessWidget {
       ),
     );
   }
-}
+ }

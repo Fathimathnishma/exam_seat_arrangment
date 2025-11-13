@@ -27,7 +27,7 @@ class OnboardingFrame extends StatelessWidget {
             aspectRatio: 1 / 1,
             child: Image.asset(onboardingModel.image, fit: BoxFit.contain),
           ),
-          const Gap(20),
+          const Gap(15),
           SmoothPageIndicator(
             controller: pageController,
             count: OnboardingLocalData.list.length,
@@ -40,18 +40,18 @@ class OnboardingFrame extends StatelessWidget {
               paintStyle: PaintingStyle.fill,
             ),
           ),
-          const Gap(40),
+          const Gap(35),
           Text(
             onboardingModel.title,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 26,
+              fontSize: 24,
               color: AppColors.textColor,
               //     .white, // Color here doesn't matter due to the gradient.
             ),
           ),
-          const Gap(8),
+          const Gap(10),
           Text(
             onboardingModel.description,
             style: TextStyle(
@@ -62,7 +62,7 @@ class OnboardingFrame extends StatelessWidget {
               color: AppColors.textColor,
             ),
             textAlign: TextAlign.center,
-            maxLines: 4,
+            maxLines: 7,
           ),
           Gap(30),
         ],

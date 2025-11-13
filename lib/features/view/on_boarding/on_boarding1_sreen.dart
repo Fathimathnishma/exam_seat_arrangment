@@ -14,7 +14,7 @@ class OnBoardingScreen extends StatefulWidget {
 class _OnBoardingScreenState extends State<OnBoardingScreen> {
   PageController pageController = PageController();
   int currentIndex = 0;
-
+  
   @override
   Widget build(BuildContext context) {
     // final mqHeight = MediaQuery.of(context).size.height;

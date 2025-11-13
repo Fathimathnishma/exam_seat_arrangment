@@ -1,6 +1,5 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/core/utils/app_images.dart';
-import 'package:bca_exam_managment/features/view/local/localdata.dart';
 import 'package:bca_exam_managment/features/view/teachers/exam/add_exam_sreens.dart';
 import 'package:bca_exam_managment/features/view/teachers/exam/exam_details.dart';
 import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
@@ -16,24 +15,23 @@ class AllExamScreen extends StatefulWidget {
 }
 
 class _AllExamScreenState extends State<AllExamScreen> {
- @override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    Provider.of<ExamProvider>(context, listen: false).fetchExams();
-  });
-}
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ExamProvider>(context, listen: false).fetchExams();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-
       appBar: AppBar(
+        automaticallyImplyLeading: false, // ✅ Removes default back button
         backgroundColor: AppColors.white,
         title: Text(
           "All Exams",
-          //textAlign: TextAlign.start,
           style: TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 20,
@@ -44,118 +42,127 @@ void initState() {
       body: Consumer<ExamProvider>(
         builder: (BuildContext context, ExamProvider state, Widget? child) {
           if (state.isLoading) {
-            // Show loading spinner while fetching
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state.allExams.isEmpty) {
-            // Show placeholder if list is empty
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.meeting_room, size: 60, color: AppColors.grey),
-                  const SizedBox(height: 12),
-                  Text(
-                    "No rooms available",
-                    style: TextStyle(fontSize: 16, color: AppColors.textColor),
-                  ),
-                ],
+          return Column(
+            children: [
+              // ✅ Always visible search bar
+              Padding(
+                padding: const EdgeInsets.all(9.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        onChanged: state.onSearchChanged,
+                        decoration: InputDecoration(
+                          hintText: 'Search exam...',
+                          hintStyle: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            size: 19,
+                            color: Colors.white,
+                          ),
+                          filled: true,
+                          fillColor: AppColors.primary,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(7),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Container(
+                      height: 46,
+                      width: MediaQuery.sizeOf(context).width * 0.12,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(13.0),
+                        child: Image.asset(AppImages.filter),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          }
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(9.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            hintText: 'Search any Product..',
-                            hintStyle: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.white,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              size: 19,
-                              color: AppColors.white,
-                            ),
-                            filled: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(7),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 5),
-                            fillColor: AppColors.primary,
+
+              // ✅ Exam list or no data message
+              if (state.filteredExams.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(AppImages.noData, height: 50, width: 50),
+                        const SizedBox(height: 12),
+                        Text(
+                          state.searchText.isNotEmpty
+                              ? "No matching Exam found"
+                              : "No Exam available...",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey.shade600,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 3),
-                      Container(
-                        height: 46,
-                        width: MediaQuery.sizeOf(context).width * 0.12,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(13.0),
-                          child: Image.asset(AppImages.filter),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                ListView.separated(
-                  physics: NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: state.allExams.length,
-                  itemBuilder: (context, index) {
-                    final data = state.allExams[index];
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ExamDetailScreen(exam: data,),
-                            ),
-                          );
-                        },
-                        child: MainFrame(
-                          examName: data.courseName,
-                          examCode: data.courseId,
-                          time: data.startTime,
-                          sem: data.sem,
-                          
-                          onUpdate: () {
-                            state.setExamForUpdate(data);
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    itemCount: state.filteredExams.length,
+                    itemBuilder: (context, index) {
+                      final data = state.filteredExams[index];
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: InkWell(
+                          onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) => AddExamScreens(exam: data),
+                                builder: (context) =>
+                                    ExamDetailScreen(exam: data),
                               ),
                             );
                           },
-                          onDelete: () {
-                            state.deleteExam(data.examId!);
-                          },
+                          child: MainFrame(
+                            examName: data.courseName,
+                            examCode: data.courseId,
+                            time: data.startTime,
+                            sem: data.sem,
+                            onUpdate: () {
+                              state.setExamForUpdate(data);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddExamScreens(exam: data),
+                                ),
+                              );
+                            },
+                            onDelete: () {
+                              state.deleteExam(data.examId!);
+                            },
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  separatorBuilder:
-                      (context, index) => const SizedBox(height: 5),
+                      );
+                    },
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 5),
+                  ),
                 ),
-              ],
-            ),
+            ],
           );
         },
       ),

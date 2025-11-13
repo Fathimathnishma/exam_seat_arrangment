@@ -1,6 +1,6 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/core/utils/app_images.dart';
-import 'package:bca_exam_managment/features/view/student/students_login_Screen.dart';
+import 'package:bca_exam_managment/features/view/student/students_entry_Screen.dart';
 import 'package:bca_exam_managment/features/view/teachers/teacher_login.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
@@ -21,29 +21,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
 
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Container(
-              height: 41,
-              width: 43,
-              decoration: BoxDecoration(
-                color: AppColors.white, // background color for visibility
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey,
-                    blurRadius: 1, // soften the shadow
-                  ),
-                ],
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(Icons.arrow_back),
-            ),
-          ),
-        ),
+        
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
