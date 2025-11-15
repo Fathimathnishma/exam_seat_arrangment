@@ -69,30 +69,36 @@ class ExamService {
        log("rron get exist");
      final List<RoomModel> matchedRooms = [];
 
-    for (var doc in querySnapshot.docs) {
-      final data = doc.data();
+   for (var doc in querySnapshot.docs) {
+  final data = doc.data();
 
-      // Check if 'exams' exists and is a List
-      final exams = data['exams'] as List<dynamic>?;
-      log("exam exist");
+  // Make sure 'exams' exists and is a List
+  final rawExams = data['exams'];
+  log("Raw exams: $rawExams");
 
-      if (exams != null && exams.isNotEmpty) {
-        // Check if any exam in this room has the given examId
-        final hasExam = exams.any((exam) {
-          if (exam is Map<String, dynamic>) {
-            return exam['examId'] == examId;
-          }
-          return false;
-        });
-        log("exam exist2");
+  if (rawExams != null && rawExams is List) {
+    // Normalize to a list of Map<String, dynamic> if needed
+    final exams = rawExams.map((e) {
+      if (e is Map<String, dynamic>) return e;
+      // If exams stored as just examId strings
+      return {'examId': e};
+    }).toList();
 
-        if (hasExam) {
-          // Convert Firestore data to RoomModel
-          final room = RoomModel.fromMap(data);
-          matchedRooms.add(room);
-        }
-      }
+    log("Exams after mapping: $exams");
+
+    // Check if any exam matches examId
+    final hasExam = exams.any((exam) => exam['examId'] == examId);
+
+    if (hasExam) {
+      final room = RoomModel.fromMap(data);
+      matchedRooms.add(room);
     }
+    log("Matched rooms count: ${matchedRooms.length}");
+  } else {
+    log("No exams found in this room");
+  }
+}
+
     return matchedRooms;
     } catch (e) {
       print('Error fetching rooms by examId: $e');

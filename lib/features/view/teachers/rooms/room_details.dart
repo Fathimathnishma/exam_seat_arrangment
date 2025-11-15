@@ -29,10 +29,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final roomName = widget.roomModel.roomName ?? 'N/A';
-    final capacity = widget.roomModel.capacity ?? 0;
-    final roomNo = widget.roomModel.roomNo ?? 'N/A';
-    final matrix = widget.roomModel.layout ?? '2';
+    final room = widget.roomModel;
+    final roomName = room.roomName ?? 'N/A';
+    final capacity = room.capacity;
+    final roomNo = room.roomNo;
+    final matrix = room.layout ?? '2';
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -62,7 +63,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SelectExamDemo(roomId: widget.roomModel.id!),
+              builder: (context) => SelectExamDemo(roomId: room.id!),
             ),
           );
         },
@@ -73,17 +74,22 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         child: Consumer2<ExamProvider, RoomProvider>(
           builder: (context, examState, roomState, _) {
             final exams = examState.examinRoom;
-            String availability = roomState.getAvailability(capacity);
-
+            final availability = roomState.getAvailability(capacity);
+             if (examState.isLoading) {
+          // Simple loading indicator
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildRowInfo("Room Name", roomName),
                 _buildRowInfo("Capacity", capacity.toString(), "Status", availability),
                 _buildRowInfo("Room No", roomNo, "Layout", matrix),
-
                 const SizedBox(height: 20),
 
+                // ---------------- Exams ----------------
                 if (exams.isNotEmpty) ...[
                   const Text(
                     "Exams",
@@ -103,7 +109,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         sem: exam.sem,
                         showDeleteOnlyMenu: true,
                         onDelete: () {
-                          examState.deleteExamFromRoom(widget.roomModel.id!, exam.examId!);
+                          examState.deleteExamFromRoom(() {
+                            roomState.fetchRooms();
+                          },room.id!, exam.examId!);
                           Navigator.pop(context);
                         },
                       );
@@ -140,7 +148,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
                   const SizedBox(height: 8),
 
-                  _buildSeatArrangement(widget.roomModel.allSeats, matrix, exams),
+                  _buildSeatArrangement(room.allSeats, matrix, exams),
                 ] else ...[
                   const SizedBox(height: 20),
                   const Text(
@@ -188,99 +196,99 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   // ---------------- Seat Arrangement ----------------
-  Widget _buildSeatArrangement(List<Map<String, dynamic>> allSeats, String matrix, List<ExamModel> exams) {
-    if (allSeats.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(12.0),
-        child: Text(
-          "No seats assigned.",
-          style: TextStyle(fontStyle: FontStyle.italic),
-        ),
-      );
-    }
-
-    final Map<String, Map<String, dynamic>> examSummary = {};
-    for (var seat in allSeats) {
-      final examId = seat['exam'];
-      final colorValue = seat['color'];
-      final color = colorValue is int ? Color(colorValue) : Colors.grey;
-
-      // ✅ Skip empty seats (exam == "Empty" or null)
-      if (examId == null || examId == "Empty") continue;
-
-      // ✅ Handle unknown exams
-      final examExists = exams.any((e) => e.examId == examId);
-      final validExamId = examExists ? examId : 'Unknown Exam';
-
-      examSummary.putIfAbsent(validExamId, () => {'color': color, 'count': 0});
-      examSummary[validExamId]!['count']++;
-    }
-
-    int eachSideCols = matrix == '3' ? 3 : 2;
-    final int leftCount = allSeats.length ~/ 2;
-    final leftSeats = allSeats.sublist(0, leftCount);
-    final rightSeats = allSeats.sublist(leftCount);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 10),
-        const Text(
-          "Exam Color Legend",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 6),
-
-        if (examSummary.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text("No exams arranged yet.", style: TextStyle(color: Colors.grey)),
-          )
-        else
-          ...examSummary.entries.map((entry) {
-            final examName = entry.key;
-            final color = entry.value['color'] as Color;
-            final count = entry.value['count'].toString();
-
-            if (examName == 'Unknown Exam') {
-              return _buildLegendRow(Colors.yellow.shade700, "Unknown Exam", count);
-            }
-
-            final exam = exams.firstWhere(
-              (e) => e.examId == examName,
-              orElse: () => ExamModel(
-                examId: '',
-                courseName: '',
-                courseId: '',
-                startTime: '',
-                sem: '',
-                students: [],
-                duplicatestudents: [],
-                duration: '',
-                endTime: '',
-                department: '',
-                date: '',
-              ),
-            );
-
-            return _buildLegendRow(color, exam.courseName, count);
-          }),
-
-        const SizedBox(height: 20),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(child: _buildGrid(leftSeats, crossAxisCount: eachSideCols, )),
-            const SizedBox(width: 20),
-            Expanded(child: _buildGrid(rightSeats, crossAxisCount: eachSideCols, )),
-          ],
-        ),
-      ],
+  // ---------------- Seat Arrangement ----------------
+Widget _buildSeatArrangement(List<Map<String, dynamic>> allSeats, String matrix, List<ExamModel> exams) {
+  if (allSeats.isEmpty) {
+    return const Padding(
+      padding: EdgeInsets.all(12.0),
+      child: Text(
+        "No seats assigned.",
+        style: TextStyle(fontStyle: FontStyle.italic),
+      ),
     );
   }
 
-  Widget _buildGrid(List<Map<String, dynamic>> seats, {required int crossAxisCount}) {
+  final Map<String, Map<String, dynamic>> examSummary = {};
+  for (var seat in allSeats) {
+    final examId = seat['exam'];
+    final colorValue = seat['color'];
+    final color = colorValue is int ? Color(colorValue) : Colors.grey;
+
+    // Skip empty seats
+    if (examId == null || examId == "Empty") continue;
+
+    final examExists = exams.any((e) => e.examId == examId);
+    final validExamId = examExists ? examId : 'Unknown Exam';
+
+    examSummary.putIfAbsent(validExamId, () => {'color': color, 'count': 0});
+    examSummary[validExamId]!['count']++;
+  }
+
+  int eachSideCols = matrix == '3' ? 3 : 2;
+  final int leftCount = allSeats.length ~/ 2;
+  final leftSeats = allSeats.sublist(0, leftCount);
+  final rightSeats = allSeats.sublist(leftCount);
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const SizedBox(height: 10),
+      const Text(
+        "Exam Color Legend",
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 6),
+
+      if (examSummary.isEmpty)
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text("No exams arranged yet.", style: TextStyle(color: Colors.grey)),
+        )
+      else
+        ...examSummary.entries.map((entry) {
+          final examName = entry.key;
+          final color = entry.value['color'] as Color;
+          final count = entry.value['count'].toString();
+
+          if (examName == 'Unknown Exam') {
+            return _buildLegendRow(Colors.yellow.shade700, "Unknown Exam", count);
+          }
+
+          final exam = exams.firstWhere(
+            (e) => e.examId == examName,
+            orElse: () => ExamModel(
+              examId: '',
+              courseName: '',
+              courseId: '',
+              startTime: '',
+              sem: '',
+              students: [],
+              duplicatestudents: [],
+              duration: '',
+              endTime: '',
+              department: '',
+              date: '',
+            ),
+          );
+
+          return _buildLegendRow(color, exam.courseName, count);
+        }).toList(),
+
+      const SizedBox(height: 20),
+
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(child: _buildGrid(leftSeats, crossAxisCount: eachSideCols)),
+          const SizedBox(width: 20),
+          Expanded(child: _buildGrid(rightSeats, crossAxisCount: eachSideCols)),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _buildGrid(List<Map<String, dynamic>> seats, {required int crossAxisCount}) {
   return GridView.builder(
     physics: const NeverScrollableScrollPhysics(),
     shrinkWrap: true,
@@ -294,10 +302,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     itemBuilder: (context, index) {
       final seat = seats[index];
 
-      // ✅ Guard: ensure seat is a valid Map
-      if (seat is! Map<String, dynamic>) {
-        return const SizedBox.shrink();
-      }
+      if (seat is! Map<String, dynamic>) return const SizedBox.shrink();
 
       final student = seat['student'];
       final colorValue = seat['color'];
@@ -306,6 +311,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           : (colorValue is Color ? colorValue : Colors.grey);
 
       final seatNo = 'S${index + 1}';
+
+      // Safely fetch regNo for display
+      String regNo = '';
+      if (student is StudentsModel) {
+        regNo = student.regNo;
+      } else if (student is Map<String, dynamic>) {
+        regNo = student['regNo'] ?? '';
+      }
 
       return Container(
         decoration: BoxDecoration(
@@ -317,11 +330,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           children: [
             Center(
               child: Text(
-                student is StudentsModel
-                    ? student.regNo
-                    : (student is Map<String, dynamic>
-                        ? (student['regNo'] ?? '')
-                        : ''),
+                regNo.isNotEmpty ? regNo : '-', // Display '-' if student is null
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
@@ -357,6 +366,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 }
 
 
+  
   Widget _buildLegendRow(Color color, String exam, String studentsNo) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8),

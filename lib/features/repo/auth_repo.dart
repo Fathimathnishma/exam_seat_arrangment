@@ -6,6 +6,10 @@ class AuthRepository {
 
   AuthRepository(this._authService);
 
+  // ===============================================================
+  // 🔹 EXISTING ADMIN REPO METHODS (UNTOUCHED)
+  // ===============================================================
+
   Future<UserModel?> addUser(UserModel user) {
     return _authService.addUserByAdmin(userModel: user);
   }
@@ -22,15 +26,14 @@ class AuthRepository {
     return _authService.deleteUserAccount(userId);
   }
 
-  /// 🔹 Fetch current user if logged in
   Future<UserModel?> fetchCurrentUser() {
     return _authService.fetchCurrentUser();
   }
-  //fetch all users
+
   Future<List<UserModel>> fetchAllUsers() {
     return _authService.fetchAllUsers();
   }
-  /// fetch students detail
+
   Future<Map<String, dynamic>?> fetchSeatAndRoom({
     required String regNo,
     required String department,
@@ -41,5 +44,31 @@ class AuthRepository {
       department: department,
       todayDate: todayDate,
     );
-}
+  }
+
+  // ===============================================================
+  // 🚀 ADDED: STUDENT REPO METHODS
+  // ===============================================================
+
+  Future<Map<String, dynamic>?> studentSignUp({
+    required String name,
+    required String studentId,
+    required String password,
+  }) {
+    return _authService.studentSignUp(
+      name: name,
+      studentId: studentId,
+      password: password,
+    );
+  }
+
+  Future<Map<String, dynamic>?> studentLogin({
+    required String studentId,
+    required String password,
+  }) {
+    return _authService.studentLogin(
+      studentId: studentId,
+      password: password,
+    );
+  }
 }

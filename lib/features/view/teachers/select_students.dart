@@ -235,10 +235,11 @@ class _SelectExamDemoState extends State<SelectExamDemo> {
                               log('✅ Proceed to assign students safely');
 
                               await roomState.AddExamtoList(
-                                  room.id!, selectedExam!.examId!);
+                               
+                                 room.id!, selectedExam!.examId!);
                               await roomState.assignStudentsToRoom(
-                                exam: selectedExam!,
-                                roomId: room.id!,
+                                exam:  selectedExam!,
+                                roomId: room.id!, 
                                 count: studentCount,
                               );
 

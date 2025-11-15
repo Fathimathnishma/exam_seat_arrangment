@@ -24,7 +24,7 @@ class ExamRepository {
   }
 
 Future <List<RoomModel>> getRoomsByExamId(String examId) async {
-  return _examService.getRoomsByExamId(examId);
+  return _examService.getRoomsByExamId(examId);   
   }
 Future <List<ExamModel>> fetchExamsByIds(List<String> examId) async {
   return _examService.fetchExamsByIds(examId);

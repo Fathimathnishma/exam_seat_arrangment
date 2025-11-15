@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'dart:math' as math;
 import 'package:bca_exam_managment/features/models/exam_model.dart';
@@ -5,6 +6,7 @@ import 'package:bca_exam_managment/features/models/room_model.dart';
 import 'package:bca_exam_managment/features/models/student_model.dart';
 import 'package:bca_exam_managment/features/repo/room_repo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -104,7 +106,8 @@ class RoomProvider extends ChangeNotifier {
         roomNo: roomCode.text.trim(),
         layout: selectedLayout ?? '',
         capacity: int.tryParse(capacity.text.trim()) ?? 0,
-        createdAt: Timestamp.now(),
+        createdAt: Timestamp.now(), 
+        exams: [],
       );
 
   /// Add or Update room
@@ -161,178 +164,131 @@ class RoomProvider extends ChangeNotifier {
   }
 
 
-
 Future<Map<String, dynamic>> checkRoomAvailability({
   required RoomModel room,
   required ExamModel exam,
   required int count,
   String? currentRoomId,
 }) async {
+  final result = <String, dynamic>{};
+
+  // ---------- ROOM SEAT CHECK (FIXED) ----------
   final int totalSeats = room.capacity;
-  final int assigned = room.allSeats.length;
+
+  // If allSeats is null or empty → assigned = 0
+  final int assigned = room.allSeats
+          ?.where((s) => s["student"] != null)
+          .length ??
+      0;
+
   final int availableSeats = totalSeats - assigned;
 
-  final result = <String, dynamic>{
-    'totalSeats': totalSeats,
-    'alreadyAssigned': assigned,
-    'availableSeats': availableSeats,
-  };
+  result['totalSeats'] = totalSeats;
+  result['alreadyAssigned'] = assigned;
+  result['availableSeats'] = availableSeats;
 
-  // 🔹 Safe exam student list
+  // ---------- CHECK EXAM STUDENTS ----------
   final availableExamStudents = exam.duplicatestudents ?? [];
+
   if (availableExamStudents.isEmpty) {
-    result['status'] = false;
-    result['message'] = '❌ No students available in this exam to assign.';
-    return result;
+    return {
+      'status': false,
+      'message': '❌ No students available in this exam to assign.'
+    };
   }
 
-  // 🔹 Validate count vs available
   if (count <= 0) {
-    result['status'] = false;
-    result['message'] = '⚠️ Invalid student count: $count';
-    return result;
+    return {
+      'status': false,
+      'message': '⚠️ Invalid student count: $count'
+    };
   }
 
   if (count > availableExamStudents.length) {
-    result['status'] = false;
-    result['message'] =
-        '⚠️ Requested $count students, but only ${availableExamStudents.length} available.';
-    return result;
+    return {
+      'status': false,
+      'message':
+          '⚠️ Requested $count students, but only ${availableExamStudents.length} available.'
+    };
   }
 
-  // 🔹 Select and deduplicate students
+  // ---------- SELECT UNIQUE STUDENTS ----------
   final selectedStudents = availableExamStudents.take(count).toList();
   final uniqueStudents = {
-    for (var s in selectedStudents.where((s) => s.regNo != null)) s.regNo!: s
+    for (var s in selectedStudents)
+      if (s.regNo != null) s.regNo!: s
   }.values.toList();
-  final newStudentCount = uniqueStudents.length;
 
-  // 🔹 Already assigned in this room
+  final int newStudentCount = uniqueStudents.length;
+
+  // ---------- CHECK DUPLICATES IN THIS ROOM ----------
   final assignedRegNos = room.allSeats
-      .map((s) => (s['student'] as StudentsModel?)?.regNo)
-      .whereType<String>()
-      .toSet();
+          ?.where((s) => s["student"] != null)
+          .map((s) => (s["student"] as StudentsModel).regNo)
+          .whereType<String>()
+          .toSet() ??
+      {};
 
-  final inThisRoomDuplicates =
-      uniqueStudents.where((s) => assignedRegNos.contains(s.regNo)).toList();
+  final inThisRoomDuplicates = uniqueStudents
+      .where((s) => assignedRegNos.contains(s.regNo))
+      .toList();
 
-  // 🔹 Already assigned in other rooms
+  // ---------- CHECK OTHER ROOM DUPLICATES ----------
   final alreadyAssignedElsewhere = <StudentsModel>[];
+
   for (final student in uniqueStudents) {
-    final isAssignedElsewhere = allRooms.any((otherRoom) {
+    final matched = allRooms.any((otherRoom) {
       if (otherRoom.id == currentRoomId) return false;
+
       final assignedList = otherRoom.membersInRoom[exam.examId] ?? [];
       return assignedList.any((s) => s.regNo == student.regNo);
     });
-    if (isAssignedElsewhere) alreadyAssignedElsewhere.add(student);
+
+    if (matched) alreadyAssignedElsewhere.add(student);
   }
 
-  result['examStudentCount'] = newStudentCount;
-  result['inThisRoomDuplicates'] =
-      inThisRoomDuplicates.map((e) => e.name).toList();
-  result['alreadyAssignedElsewhere'] =
-      alreadyAssignedElsewhere.map((e) => e.name).toList();
-
-  // 🔹 Determine final status
+  // ---------- DECISION ----------
   if (availableSeats <= 0) {
-    result['status'] = false;
-    result['message'] =
-        '❌ Room ${room.roomNo} is full ($assigned/$totalSeats).';
-  } else if (newStudentCount > availableSeats) {
-    result['status'] = false;
-    result['message'] =
-        '⚠️ Only $availableSeats seats left, but trying to assign $newStudentCount students.';
-  } else if (inThisRoomDuplicates.isNotEmpty) {
-    result['status'] = false;
-    result['message'] =
-        '⚠️ ${inThisRoomDuplicates.length} students already assigned in this room.';
-  } else if (alreadyAssignedElsewhere.isNotEmpty) {
-    result['status'] = false;
-    result['message'] =
-        '⚠️ ${alreadyAssignedElsewhere.length} students already assigned in other rooms.';
-  } else {
-    result['status'] = true;
-    result['message'] =
-        '✅ Room has $availableSeats seats available. Ready to assign $newStudentCount students.';
+    return {
+      'status': false,
+      'message': '❌ Room ${room.roomNo} is FULL ($assigned/$totalSeats).'
+    };
   }
 
-  return result;
+  if (newStudentCount > availableSeats) {
+    return {
+      'status': false,
+      'message':
+          '⚠️ Only $availableSeats seats left, but trying to assign $newStudentCount students.'
+    };
+  }
+
+  if (inThisRoomDuplicates.isNotEmpty) {
+    return {
+      'status': false,
+      'message':
+          '⚠️ ${inThisRoomDuplicates.length} students already assigned in this same room.'
+    };
+  }
+
+  // if (alreadyAssignedElsewhere.isNotEmpty) {
+  //   return {
+  //     'status': false,
+  //     'message':
+  //         '⚠️ ${alreadyAssignedElsewhere.length} students already assigned in other rooms.'
+  //   };
+  // }
+
+  // ---------- SUCCESS ----------
+  return {
+    'status': true,
+    'message':
+        '✅ Room has $availableSeats seats available. Ready to assign $newStudentCount students.'
+  };
 }
 
 
 
-  // Add students
-Future<void> assignStudentsToRoom({
-  required ExamModel exam,
-  required String roomId,
-  required int count,
-}) async {
-  isLoading = true;
-  notifyListeners();
-
-  try {
-    log("🟢 Starting assignment for Room ID: $roomId");
-
-    // 1️⃣ Assign selected students to Firebase (updates membersInRoom)
-    await _roomRepo.assignStudentsToRoom(
-      exam: exam,
-      roomId: roomId,
-      count: count,
-    );
-
-    // 2️⃣ Fetch the latest room data
-    RoomModel updatedRoom = await _roomRepo.getRoomById(roomId);
-    log("✅ Room fetched: ${updatedRoom.roomNo}, capacity: ${updatedRoom.capacity}");
-
-    // 3️⃣ Arrange seats (ensure safe data structure)
-    final arrangement = arrangeSeatsWithColors(
-      Map<String, List<StudentsModel>>.from(updatedRoom.membersInRoom),
-      updatedRoom.capacity,
-      room: updatedRoom,
-    );
-
-    // 4️⃣ Log the arrangement locally
-    log("🪑 Local seat arrangement:");
-    for (var seat in arrangement['seats']) {
-      log("   Seat -> Exam: ${seat['exam']}, "
-          "Student: ${seat['student']?['name'] ?? 'null'}, "
-          "Color: ${seat['color']}");
-    }
-
-    // 5️⃣ Convert Color to int and StudentModel to map
-    final safeSeats = (arrangement['seats'] as List)
-        .map((seat) => {
-              'exam': seat['exam'] ?? 'Empty',
-              'color': (seat['color'] is Color)
-                  ? (seat['color'] as Color).value
-                  : seat['color'] ?? 0xFFBDBDBD, // grey fallback
-              'student': (seat['student'] is StudentsModel)
-                  ? (seat['student'] as StudentsModel).toMap()
-                  : seat['student'], // may already be null or map
-            })
-        .toList();
-
-    updatedRoom = updatedRoom.copyWith(allSeats: safeSeats);
-
-    // 6️⃣ Log after conversion
-    log("📦 Prepared ${safeSeats.length} safe seat maps to update Firestore");
-
-    // 7️⃣ Push updated data safely
-    await _roomRepo.updateRoom(updatedRoom);
-    log("✅ Room update success: ${updatedRoom.id}");
-
-    // 8️⃣ Refresh rooms
-    await fetchRooms();
-  } catch (e, st) {
-    log("❌ ERROR during assignStudentsToRoom: $e");
-    log("🪲 StackTrace: $st");
-    errorMessage = e.toString();
-    Fluttertoast.showToast(msg: "❌ $errorMessage");
-  }
-
-  isLoading = false;
-  notifyListeners();
-}
 
 
 
@@ -369,62 +325,126 @@ Future<void> assignStudentsToRoom({
 
   // Arrange seats
   String warningMessage = '';
-Map<String, dynamic> arrangeSeatsWithColors(
-  Map<String, List<StudentsModel>> examStudents,
-  int totalSeats, {
-  RoomModel? room,
-}) {
+// ------------------ ASSIGN STUDENTS ------------------
+Future<void> assignStudentsToRoom({
+  required ExamModel exam,
+  required String roomId,
+  required int count,
+}) async {
+  try {
+    log("=== assignStudentsToRoom START ===");
+
+    // 1. Load room
+    final room = await _roomRepo.getRoomById(roomId);
+    if (room == null) {
+      log("❌ Room not found: $roomId");
+      return;
+    }
+
+    // 2. Filter students for this exam
+    final dupStudents = exam.duplicatestudents ?? [];
+    if (dupStudents.isEmpty || count <= 0) {
+      log("❌ No students or invalid count");
+      return;
+    }
+
+    final existingMembers = room.membersInRoom[exam.examId] ?? [];
+
+    // Remove already added students
+    final newStudents = dupStudents.where(
+      (s) => !existingMembers.any((m) => m.regNo == s.regNo),
+    ).toList();
+
+    if (newStudents.isEmpty) {
+      log("⚠ All selected students already assigned to this room");
+      return;
+    }
+
+    final safeCount = count > newStudents.length ? newStudents.length : count;
+    final selectedStudents = newStudents.take(safeCount).toList();
+
+    // 3. Update membersInRoom
+    room.membersInRoom[exam.examId!] = [...existingMembers, ...selectedStudents];
+
+    // 4. Arrange seats using round-robin for ALL exams
+    final updatedSeats = arrangeSeatsWithColors(room)["seats"];
+
+    // 5. Update Firestore
+    final updatedRoom = room.copyWith(
+      membersInRoom: room.membersInRoom,
+      allSeats: updatedSeats,
+    );
+
+    await _roomRepo.updateRoom(updatedRoom);
+
+    log("✅ Students assigned and seats updated successfully.");
+    log("=== assignStudentsToRoom END ===");
+  } catch (e) {
+    log("❌ Error in assignStudentsToRoom: $e");
+  }
+}
+
+Map<String, dynamic> arrangeSeatsWithColors(RoomModel room) {
+  final int totalSeats = room.capacity;
+  final seats = List<Map<String, dynamic>>.generate(
+    totalSeats,
+    (i) => {
+      "seatNo": "S${i + 1}",
+      "student": null,
+      "exam": "Empty",
+      "color": Color(0xFFCCCCCC).value,
+    },
+  );
+
+  final examQueues = <String, List<StudentsModel>>{};
+  final examColors = <String, int>{};
   final random = math.Random();
-  final examColors = <String, Color>{};
-  final allSeats = <Map<String, dynamic>>[];
-  String warningMessage = '';
 
-  if (examStudents.isEmpty) {
-    return {'seats': [], 'message': "❌ No students found"};
-  }
-  if (totalSeats <= 0) {
-    return {'seats': [], 'message': "❌ Invalid room capacity"};
-  }
+  // Prepare queues and colors for all exams
+  room.membersInRoom.forEach((examId, students) {
+    // Remove duplicates by regNo
+    final uniqueStudents = {
+      for (var s in students) s.regNo!: s
+    }.values.toList();
 
-  // Assign color per exam
-  for (var examId in examStudents.keys) {
+    examQueues[examId] = uniqueStudents;
     examColors[examId] = Color.fromARGB(
       255,
-      80 + random.nextInt(150),
-      80 + random.nextInt(150),
-      80 + random.nextInt(150),
-    );
-  }
+      random.nextInt(200) + 30,
+      random.nextInt(200) + 30,
+      random.nextInt(200) + 30,
+    ).value;
+  });
 
-  // Distribute fairly by alternating
-  final examQueue = examStudents.keys.toList();
-  while (examStudents.values.any((v) => v.isNotEmpty)) {
-    examQueue.sort((a, b) => examStudents[b]!.length.compareTo(examStudents[a]!.length));
-    String? current;
-    for (var e in examQueue) {
-      if (allSeats.isEmpty || allSeats.last['exam'] != e) {
-        current = e;
-        break;
+  int seatIndex = 0;
+
+  // Round-robin placement across exams
+  while (examQueues.values.any((q) => q.isNotEmpty) && seatIndex < totalSeats) {
+    for (var examId in examQueues.keys) {
+      final queue = examQueues[examId]!;
+      if (queue.isEmpty) continue;
+
+      // Find next empty seat
+      while (seatIndex < totalSeats && seats[seatIndex]['student'] != null) {
+        seatIndex++;
       }
-    }
-    current ??= examQueue.first;
-    final list = examStudents[current]!;
-    if (list.isNotEmpty) {
-      allSeats.add({
-        'student': list.removeAt(0),
-        'exam': current,
-        'color': examColors[current],
-      });
+      if (seatIndex >= totalSeats) break;
+
+      final student = queue.removeAt(0);
+      seats[seatIndex] = {
+        "seatNo": "S${seatIndex + 1}",
+        "student": student.toMap(),
+        "exam": examId,
+        "color": examColors[examId],
+      };
+      seatIndex++;
     }
   }
 
-  // Fill empty seats
-  while (allSeats.length < totalSeats) {
-    allSeats.add({'student': null, 'exam': 'Empty', 'color': Colors.grey});
-  }
-
-  if (room != null) room.allSeats = allSeats;
-  return {'seats': allSeats, 'message': warningMessage};
+  return {
+    "seats": seats,
+    "examColors": examColors,
+  };
 }
 
 }

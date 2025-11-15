@@ -308,6 +308,7 @@ void filterExams() {
     notifyListeners();
 
     try {
+      roomofExams=[];
       roomofExams = await _examRepo.getRoomsByExamId(examId);
       log("mmmmmm12 function called");
       log(roomofExams.length.toString());
@@ -366,31 +367,49 @@ void filterExams() {
     isLoading = false;
     notifyListeners();
   }
-
-  void deleteExamFromRoom(String roomId, String examId) async {
+void deleteExamFromRoom(void Function() onSuccess, String roomId, String examId) async {
   isLoading = true;
   notifyListeners();
 
   try {
-     log("1");
-    // Call the service function
+    log("Deleting exam from room: $roomId, $examId");
+
+    // Call the repository function
     await _examRepo.deleteExamFromRoom(roomId, examId);
-    log("1");
-    // Update local state
+
+    // Update roomofExams list
     final roomIndex = roomofExams.indexWhere((r) => r.id == roomId);
     if (roomIndex != -1) {
-      roomofExams[roomIndex].exams.remove(examId);
+      // Convert examId string to int
+      final examIdInt = int.tryParse(examId);
+      if (examIdInt != null) {
+        // Remove the exam and reassign list to trigger UI update
+        roomofExams[roomIndex].exams =
+            roomofExams[roomIndex].exams.where((e) => e != examIdInt).toList();
+      }
     }
 
-    examinRoom.removeWhere((exam) => exam.examId == examId);
-
+    // Update examinRoom list
+    examinRoom = examinRoom
+        .where((exam) => exam.examId != examId)
+        .toList();
+  onSuccess();
   } catch (e) {
     errorMessage = e.toString();
+    log("Error deleting exam: $errorMessage");
   } finally {
     isLoading = false;
     notifyListeners();
   }
 }
+
+
+
+
+   
+
+
+
 
 
   /// Delete exam
