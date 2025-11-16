@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:bca_exam_managment/features/models/exam_model.dart';
 import 'package:bca_exam_managment/features/models/room_model.dart';
 import 'package:bca_exam_managment/features/models/student_model.dart';
+import 'package:bca_exam_managment/features/repo/exam_repo.dart';
 import 'package:bca_exam_managment/features/repo/room_repo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -12,8 +13,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 class RoomProvider extends ChangeNotifier {
   final RoomRepository _roomRepo;
+  final ExamRepository _examRepo;
 
-  RoomProvider(this._roomRepo);
+  RoomProvider(this._roomRepo, this._examRepo);
 
   List<RoomModel> allRooms = [];
   List<RoomModel> filteredRooms = [];
@@ -331,6 +333,9 @@ Future<void> assignStudentsToRoom({
   required String roomId,
   required int count,
 }) async {
+   isLoading = true;
+  notifyListeners(); // Start loading
+
   try {
     log("=== assignStudentsToRoom START ===");
 
@@ -343,14 +348,17 @@ Future<void> assignStudentsToRoom({
 
     // 2. Filter students for this exam
     final dupStudents = exam.duplicatestudents ?? [];
+    log("Duplicate students: ${dupStudents.map((s) => s.regNo).toList()}");
+
     if (dupStudents.isEmpty || count <= 0) {
       log("❌ No students or invalid count");
       return;
     }
 
+    // Existing members for this exam
     final existingMembers = room.membersInRoom[exam.examId] ?? [];
 
-    // Remove already added students
+    // Remove already assigned students
     final newStudents = dupStudents.where(
       (s) => !existingMembers.any((m) => m.regNo == s.regNo),
     ).toList();
@@ -360,13 +368,29 @@ Future<void> assignStudentsToRoom({
       return;
     }
 
+    // Apply safe count
     final safeCount = count > newStudents.length ? newStudents.length : count;
     final selectedStudents = newStudents.take(safeCount).toList();
+    final remainingStudents = newStudents.skip(safeCount).toList();
 
-    // 3. Update membersInRoom
-    room.membersInRoom[exam.examId!] = [...existingMembers, ...selectedStudents];
+    log("Selected students for assignment: ${selectedStudents.map((s) => s.regNo).toList()}");
+    log("Remaining duplicates after assignment: ${remainingStudents.map((s) => s.regNo).toList()}");
 
-    // 4. Arrange seats using round-robin for ALL exams
+    // 3. Update membersInRoom with deduplication
+    room.membersInRoom[exam.examId!] = [
+      ...existingMembers,
+      ...selectedStudents,
+    ]
+        .fold<Map<String, StudentsModel>>({}, (map, student) {
+      map[student.regNo!] = student; // key by regNo to remove duplicates
+      return map;
+    })
+        .values
+        .toList();
+
+    log("Final members in room for exam ${exam.examId}: ${room.membersInRoom[exam.examId]!.map((s) => s.regNo).toList()}");
+
+    // 4. Arrange seats for ALL exams using round-robin
     final updatedSeats = arrangeSeatsWithColors(room)["seats"];
 
     // 5. Update Firestore
@@ -377,10 +401,21 @@ Future<void> assignStudentsToRoom({
 
     await _roomRepo.updateRoom(updatedRoom);
 
+    // 6. Update remaining duplicates in Exam
+    await _examRepo.updateExam(
+      exam.copyWith(
+        duplicatestudents: remainingStudents,
+      ),
+    );
+    fetchRooms();
+
     log("✅ Students assigned and seats updated successfully.");
     log("=== assignStudentsToRoom END ===");
   } catch (e) {
     log("❌ Error in assignStudentsToRoom: $e");
+  }finally{
+    isLoading = false;
+    notifyListeners(); // End loading, refresh UI
   }
 }
 

@@ -218,9 +218,9 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// 🔹 Delete Account
-  Future<void> deleteAccount({VoidCallback? onSuccess, required String userId}) async {
+  Future<void> deleteAccount({VoidCallback? onSuccess, }) async {
     try {
-      await _authRepo.deleteAccount(userId);
+      await _authRepo.deleteSelfAccount();
       currentUser = null;
 
       showCustomToast(message: 'Account deleted successfully!');
@@ -233,7 +233,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> deleteTeacher({VoidCallback? onSuccess, required String userId}) async {
     try {
-      await _authRepo.deleteAccount(userId);
+      await _authRepo.deleteUserAccount(userId);
       currentUser = null;
 
       showCustomToast(message: 'Teacher deleted!');

@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
           create: (context) => ExamProvider(ExamRepository(ExamService())),
         ),
         ChangeNotifierProvider(
-          create: (context) => RoomProvider(RoomRepository(RoomService())),
+          create: (context) => RoomProvider(RoomRepository(RoomService()),ExamRepository(ExamService())),
         ),
         ChangeNotifierProvider(
           create: (context) => AuthProvider(AuthRepository(AuthService())),

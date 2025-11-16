@@ -40,9 +40,24 @@ class AuthService {
     await _auth.signOut();
   }
 
-  Future<void> deleteUserAccount(String userId) async {
-    await usersRef.doc(userId).delete();
+  Future<void> deleteSelfAccount() async {
+  final user = _auth.currentUser;
+  if (user == null) return;
+
+  try {
+    // Delete Firestore doc
+    await usersRef.doc(user.uid).delete();
+    log("✅ Deleted Firestore doc for self: ${user.uid}");
+
+    // Delete Auth account
+    await user.delete();
+    log("✅ Deleted Auth account for self: ${user.uid}");
+  } catch (e) {
+    log("🔥 Error deleting self account: $e");
+    rethrow;
   }
+}
+
 
   Future<UserModel?> fetchCurrentUser() async {
     final user = _auth.currentUser;
@@ -69,6 +84,28 @@ class AuthService {
     // original logic untouched
     return null;
   }
+  Future<void> deleteUserAccount(String userId) async {
+  try {
+    // Fetch user data before deletion for logging
+    final doc = await usersRef.doc(userId).get();
+    if (!doc.exists) {
+      log("⚠️ Attempted to delete non-existing user: $userId");
+      return;
+    }
+
+    final userData = doc.data();
+    
+    // Delete the user
+    await usersRef.doc(userId).delete();
+    
+    // Log deleted user info
+    log("✅ Admin deleted user: $userId, data: $userData");
+  } catch (e) {
+    log("🔥 Error deleting user $userId: $e");
+    rethrow;
+  }
+}
+
 
   // ===============================================================
   // 🚀 ADDED: STUDENT SIGNUP & LOGIN

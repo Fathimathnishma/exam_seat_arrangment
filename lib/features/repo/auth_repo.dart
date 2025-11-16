@@ -22,8 +22,11 @@ class AuthRepository {
     return _authService.logout();
   }
 
-  Future<void> deleteAccount(String userId) {
+  Future<void> deleteUserAccount(String userId) {
     return _authService.deleteUserAccount(userId);
+  }
+  Future<void> deleteSelfAccount( ) {
+    return _authService.deleteSelfAccount();
   }
 
   Future<UserModel?> fetchCurrentUser() {

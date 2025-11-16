@@ -25,12 +25,12 @@ class RoomRepository {
     return _roomService.getRoomById(roomId);
   }
 //assignStudentsToRoom
-Future<void> assignStudentsToRoom({
-    required ExamModel exam,
-    required String roomId,
-    required int count,}){
-      return _roomService.assignStudentsToRoom(exam: exam, roomId: roomId, count: count);
-    }
+//F//uture<void> assignStudentsToRoom({
+    // required ExamModel exam,
+    // required String roomId,
+    // required int count,}){
+    //   return _roomService.assignStudentsToRoom(exam: exam, roomId: roomId, count: count);
+    // }
 
     ///addExamToRoom
   Future<void>addExamToRoom(String rooomid,String examId){

@@ -13,7 +13,7 @@ class RoomService {
   // ADD ROOM
   // ---------------------------------------------------------------------------
   Future<void> addRoom(RoomModel roomModel) async {
-    try {
+    try { 
       final id = firebase.doc().id;
       final roomRef = firebase.doc(id);
       final room = roomModel.copyWith(id: id);
@@ -97,93 +97,93 @@ class RoomService {
   // ---------------------------------------------------------------------------
   // ASSIGN STUDENTS TO ROOM
   // ---------------------------------------------------------------------------
-  Future<void> assignStudentsToRoom({
-  required ExamModel exam,
-  required String roomId,
-  required int count,
-}) async {
-  try {
-    log("=== SERVICE assignStudentsToRoom START ===");
+//   Future<void> assignStudentsToRoom({
+//   required ExamModel exam,
+//   required String roomId,
+//   required int count,
+// }) async {
+//   try {
+//     log("=== SERVICE assignStudentsToRoom START ===");
 
-    // 1. Get duplicate students
-    final dupStudents = exam.duplicatestudents ?? [];
-    log("Duplicate students: ${dupStudents.map((s) => s.regNo).toList()}");
+//     // 1. Get duplicate students
+//     final dupStudents = exam.duplicatestudents ?? [];
+//     log("Duplicate students: ${dupStudents.map((s) => s.regNo).toList()}");
 
-    if (dupStudents.isEmpty || count <= 0) {
-      log("❌ No duplicates or invalid count");
-      return;
-    }
+//     if (dupStudents.isEmpty || count <= 0) {
+//       log("❌ No duplicates or invalid count");
+//       return;
+//     }
 
-    // 2. Fetch room
-    final roomSnap = await firebase.doc(roomId).get();
-    if (!roomSnap.exists) {
-      log("❌ Room not found: $roomId");
-      return;
-    }
+//     // 2. Fetch room
+//     final roomSnap = await firebase.doc(roomId).get();
+//     if (!roomSnap.exists) {
+//       log("❌ Room not found: $roomId");
+//       return;
+//     }
 
-    final roomData = roomSnap.data()!;
-    roomData["id"] = roomSnap.id;
-    final room = RoomModel.fromMap(roomData);
+//     final roomData = roomSnap.data()!;
+//     roomData["id"] = roomSnap.id;
+//     final room = RoomModel.fromMap(roomData);
 
-    final members = room.membersInRoom;
-    final existingList = members[exam.examId] ?? [];
+//     final members = room.membersInRoom;
+//     final existingList = members[exam.examId] ?? [];
 
-    // 3. Remove already assigned
-    final cleanDuplicateList = dupStudents.where((s) =>
-        !existingList.any((m) => m.regNo == s.regNo)).toList();
+//     // 3. Remove already assigned
+//     final cleanDuplicateList = dupStudents.where((s) =>
+//         !existingList.any((m) => m.regNo == s.regNo)).toList();
 
-    if (cleanDuplicateList.isEmpty) {
-      log("⚠ All duplicate students are already assigned.");
-      return;
-    }
+//     if (cleanDuplicateList.isEmpty) {
+//       log("⚠ All duplicate students are already assigned.");
+//       return;
+//     }
 
-    // 4. Apply safe count (cannot exceed list)
-    final safeCount =
-        count > cleanDuplicateList.length ? cleanDuplicateList.length : count;
+//     // 4. Apply safe count (cannot exceed list)
+//     final safeCount =
+//         count > cleanDuplicateList.length ? cleanDuplicateList.length : count;
 
-    final selected = cleanDuplicateList.take(safeCount).toList();
-    final remaining = cleanDuplicateList.skip(safeCount).toList();
+//     final selected = cleanDuplicateList.take(safeCount).toList();
+//     final remaining = cleanDuplicateList.skip(safeCount).toList();
 
-    log("Selected for assignment: ${selected.map((s) => s.regNo).toList()}");
-    log("Remaining after assignment: ${remaining.map((s) => s.regNo).toList()}");
+//     log("Selected for assignment: ${selected.map((s) => s.regNo).toList()}");
+//     log("Remaining after assignment: ${remaining.map((s) => s.regNo).toList()}");
 
-    // 5. Add selected students to room
-    existingList.addAll(selected);
+//     // 5. Add selected students to room
+//     existingList.addAll(selected);
 
-    // Deduplicate again (safety)
-    final updatedList = {
-      for (var s in existingList) s.regNo: s,
-    }.values.toList();
+//     // Deduplicate again (safety)
+//     final updatedList = {
+//       for (var s in existingList) s.regNo: s,
+//     }.values.toList();
 
-    members[exam.examId!] = updatedList;
+//     members[exam.examId!] = updatedList;
 
-    log("Final list in room: ${updatedList.map((s) => s.regNo).toList()}");
+//     log("Final list in room: ${updatedList.map((s) => s.regNo).toList()}");
 
-    // 6. Commit updates to Firebase
-    final batch = firestore.batch();
+//     // 6. Commit updates to Firebase
+//     final batch = firestore.batch();
 
-    batch.update(firebase.doc(roomId), {
-      "membersInRoom": members.map(
-        (key, value) => MapEntry(
-          key,
-          value.map((s) => s.toMap()).toList(),
-        ),
-      ),
-    });
+//     batch.update(firebase.doc(roomId), {
+//       "membersInRoom": members.map(
+//         (key, value) => MapEntry(
+//           key,
+//           value.map((s) => s.toMap()).toList(),
+//         ),
+//       ),
+//     });
 
-    batch.update(examCollection.doc(exam.examId), {
-      "duplicatestudents": remaining.map((s) => s.toMap()).toList(),
-    });
+//     batch.update(examCollection.doc(exam.examId), {
+//       "duplicatestudents": remaining.map((s) => s.toMap()).toList(),
+//     });
 
-    await batch.commit();
+//     await batch.commit();
 
-    log("SERVICE: Students assigned successfully!");
-    log("=== SERVICE assignStudentsToRoom END ===");
+//     log("SERVICE: Students assigned successfully!");
+//     log("=== SERVICE assignStudentsToRoom END ===");
 
-  } catch (e) {
-    log("❌ ERROR in SERVICE assignStudentsToRoom: $e");
-  }
-}
+//   } catch (e) {
+//     log("❌ ERROR in SERVICE assignStudentsToRoom: $e");
+//   }
+// }
 
 
   // ---------------------------------------------------------------------------

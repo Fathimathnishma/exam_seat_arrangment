@@ -115,7 +115,7 @@ Future<void> showLogoutDialog(BuildContext context, {required VoidCallback onCon
             );
 
             await state.deleteAccount(
-              userId: state.currentUser!.id!,
+             
               onSuccess: () {
                 Navigator.pop(context); // close loading
                 Navigator.pushReplacement(

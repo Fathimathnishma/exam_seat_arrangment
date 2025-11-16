@@ -22,7 +22,7 @@ class ExamProvider extends ChangeNotifier {
 
   // Dropdowns
   List<String> semesters = ['1', '2', '3', '4', '5', '6'];
-  List<String> departments = ['CS', 'IT', 'ECE', 'ME', 'CE'];
+  List<String> departments =["CS","BSC CHEMISTRY","BSC PHYSICS","BSC MATHS","BSC PSYCHOLOGY","COMMERCE","BA ENGLISH","BA ECONOMICS","BA POLITICS","BA MALAYALAM","BA HISTORY","BCA",];
   String? selectedDepartment;
   String? selectedSem;
 

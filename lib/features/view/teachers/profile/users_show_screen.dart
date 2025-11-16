@@ -135,7 +135,7 @@ class _AllUsersScreenState extends State<AllUsersScreen> {
                           context,
                           text: 'Delete User',
                           onConfirm: () async {
-                            await authProvider.deleteAccount(userId: user.id!);
+                            await authProvider.deleteTeacher(userId: user.id!);
                           },
                         );
                       }

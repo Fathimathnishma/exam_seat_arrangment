@@ -73,6 +73,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         padding: const EdgeInsets.all(8.0),
         child: Consumer2<ExamProvider, RoomProvider>(
           builder: (context, examState, roomState, _) {
+            if (examState.isLoading || roomState.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
             final exams = examState.examinRoom;
             final availability = roomState.getAvailability(capacity);
              if (examState.isLoading) {

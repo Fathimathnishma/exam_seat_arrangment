@@ -50,22 +50,24 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
                   ),
                   const SizedBox(height: 44),
 
-                  // Name
-                  const Text("Name:", style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 5),
-                  TextFormField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your full name',
-                      hintStyle: const TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      border: blueBorder,
-                      enabledBorder: blueBorder,
-                      focusedBorder: blueBorder,
+                  // Name (only for Sign Up)
+                  if (!isSignIn) ...[
+                    const Text("Name:", style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 5),
+                    TextFormField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your full name',
+                        hintStyle: const TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        border: blueBorder,
+                        enabledBorder: blueBorder,
+                        focusedBorder: blueBorder,
+                      ),
+                      keyboardType: TextInputType.name,
                     ),
-                    keyboardType: TextInputType.name,
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
+                  ],
 
                   // Student ID
                   const Text("Student ID:", style: TextStyle(fontWeight: FontWeight.w600)),
@@ -104,21 +106,23 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
                   Center(
                     child: InkWell(
                       onTap: () async {
-                        final name = nameController.text.trim();
                         final studentId = studentIdController.text.trim();
                         final password = passwordController.text.trim();
+                        final name = nameController.text.trim();
 
-                        if (name.isEmpty || studentId.isEmpty || password.isEmpty) {
+                        // Validate fields
+                        if (studentId.isEmpty || password.isEmpty || (!isSignIn && name.isEmpty)) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all fields')),
+                            const SnackBar(content: Text('Please fill all required fields')),
                           );
                           return;
                         }
 
+                        // Sign In or Sign Up
                         if (isSignIn) {
-                          await state.studentLogin(studentId:  studentId,password:  password);
+                          await state.studentLogin(studentId: studentId, password: password);
                         } else {
-                          await state.studentSignUp(studentId: studentId,password:  password, name: name);
+                          await state.studentSignUp(studentId: studentId, password: password, name: name);
                         }
 
                         if (!mounted) return;

@@ -2,14 +2,14 @@ import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/features/view/student/student_dashbord.dart';
 import 'package:flutter/material.dart';
 
-class StudentsLoginScreen extends StatefulWidget {
-  const StudentsLoginScreen({super.key});
+class StudentsEntryScreen extends StatefulWidget {
+  const StudentsEntryScreen({super.key});
 
   @override
-  State<StudentsLoginScreen> createState() => _StudentsLoginScreenState();
+  State<StudentsEntryScreen> createState() => _StudentsEntryScreenState();
 }
 
-class _StudentsLoginScreenState extends State<StudentsLoginScreen> {
+class _StudentsEntryScreenState extends State<StudentsEntryScreen> {
   final TextEditingController registerNumberController =
       TextEditingController();
   String? selectedDepartment;
