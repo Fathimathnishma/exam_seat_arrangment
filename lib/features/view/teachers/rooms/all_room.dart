@@ -79,17 +79,28 @@ class _AllRoomScreensState extends State<AllRoomScreens> {
                       ),
                     ),
                     const SizedBox(width: 3),
-                    Container(
-                      height: 46,
-                      width: MediaQuery.sizeOf(context).width * 0.12,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(13.0),
-                        child: Image.asset(AppImages.filter),
-                      ),
+                   Container(
+      height: 46,
+      width: MediaQuery.sizeOf(context).width * 0.12,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: InkWell(
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (context) => buildBlockFilterSheet(state),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(13.0),
+          child: Image.asset(AppImages.filter),
+        ),
+      ),
                     ),
                   ],
                 ),
@@ -155,5 +166,58 @@ class _AllRoomScreensState extends State<AllRoomScreens> {
         },
       ),
     );
+
+
+    
   }
+Widget buildBlockFilterSheet(RoomProvider provider) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Filter by Block",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        SizedBox(height: 16),
+
+        // 🔘 Checkbox List
+        ...provider.blockList.map((block) {
+          return CheckboxListTile(
+            title: Text(block),
+            value: provider.selectedBlock == block,
+            activeColor: AppColors.primary,
+            onChanged: (checked) {
+              provider.selectedBlock = checked == true ? block : null;
+              provider.filterExams();
+              Navigator.pop(context); // close sheet after selecting
+            },
+          );
+        }).toList(),
+
+        SizedBox(height: 10),
+
+        // ❌ Clear Filter
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              provider.selectedBlock = null;
+              provider.filterExams();
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Clear Filter",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+  
 }

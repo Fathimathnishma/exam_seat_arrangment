@@ -110,78 +110,50 @@ class AddExamScreens extends StatelessWidget {
                       ),
                       SizedBox(height: 12),
 
-                      // Department & Semester
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              decoration: InputDecoration(
-                                border: blueBorder,
-                                enabledBorder: blueBorder,
-                                focusedBorder: blueBorder,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 8,
-                                  horizontal: 12,
-                                ),
-                              ),
-                              value: state.selectedDepartment,
-                              hint: Text(
-                                'Department',
-                                style: TextStyle(color: AppColors.textColor),
-                              ),
-                              items:
-                                  state.departments
-                                      .map(
-                                        (dept) => DropdownMenuItem(
-                                          value: dept,
-                                          child: Text(dept),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged: state.setDepartment,
-                              validator:
-                                  (value) =>
-                                      value == null || value.isEmpty
-                                          ? 'Department required'
-                                          : null,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              decoration: InputDecoration(
-                                border: blueBorder,
-                                enabledBorder: blueBorder,
-                                focusedBorder: blueBorder,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 8,
-                                  horizontal: 12,
-                                ),
-                              ),
-                              value: state.selectedSem,
-                              hint: Text(
-                                'Semester',
-                                style: TextStyle(color: AppColors.textColor),
-                              ),
-                              items:
-                                  state.semesters
-                                      .map(
-                                        (sem) => DropdownMenuItem(
-                                          value: sem,
-                                          child: Text(sem),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged: state.setSemester,
-                              validator:
-                                  (value) =>
-                                      value == null || value.isEmpty
-                                          ? 'Semester required'
-                                          : null,
-                            ),
-                          ),
-                        ],
-                      ),
+         // Department & Semester
+Row(
+  children: [
+    Expanded(
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          border: blueBorder,
+          enabledBorder: blueBorder,
+          focusedBorder: blueBorder,
+          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        ),
+        value: state.selectedDepartment,
+        hint: Text('Department', style: TextStyle()),
+        items: state.departments
+            .map((dept) => DropdownMenuItem(value: dept, child: Text(dept)))
+            .toList(),
+        onChanged: state.setDepartment,
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Department required' : null,
+      ),
+    ),
+    SizedBox(width: 10),
+    Expanded(
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          border: blueBorder,
+          enabledBorder: blueBorder,
+          focusedBorder: blueBorder,
+          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        ),
+        value: state.selectedSem,
+        hint: Text('Semester',  ),
+        items: state.semesters
+            .map((sem) => DropdownMenuItem(value: sem, child: Text(sem)))
+            .toList(),
+        onChanged: state.setSemester,
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Semester required' : null,
+      ),
+    ),
+  ],
+),
+
+
                       SizedBox(height: 12),
 
                       // Date

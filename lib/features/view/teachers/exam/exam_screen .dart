@@ -28,7 +28,7 @@ class _AllExamScreenState extends State<AllExamScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // ✅ Removes default back button
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.white,
         title: Text(
           "All Exams",
@@ -40,14 +40,14 @@ class _AllExamScreenState extends State<AllExamScreen> {
         ),
       ),
       body: Consumer<ExamProvider>(
-        builder: (BuildContext context, ExamProvider state, Widget? child) {
+        builder: (context, state, child) {
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
           return Column(
             children: [
-              // ✅ Always visible search bar
+              // 🔍 SEARCH + FILTER ROW
               Padding(
                 padding: const EdgeInsets.all(9.0),
                 child: Row(
@@ -79,41 +79,39 @@ class _AllExamScreenState extends State<AllExamScreen> {
                       ),
                     ),
                     const SizedBox(width: 3),
-                    Container(
-                      height: 46,
-                      width: MediaQuery.sizeOf(context).width * 0.12,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(13.0),
-                        child: Image.asset(AppImages.filter),
+
+                    // 📅 FILTER BUTTON
+                    GestureDetector(
+                      onTap: () => _openFilterSheet(context),
+                      child: Container(
+                        height: 46,
+                        width: MediaQuery.sizeOf(context).width * 0.12,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(13.0),
+                          child: Image.asset(AppImages.filter),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // ✅ Exam list or no data message
+              // 🗂 NO DATA OR LIST
               if (state.filteredExams.isEmpty)
                 Expanded(
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(AppImages.noData, height: 50, width: 50),
-                        const SizedBox(height: 12),
-                        Text(
-                          state.searchText.isNotEmpty
-                              ? "No matching Exam found"
-                              : "No Exam available...",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      state.searchText.isNotEmpty
+                          ? "No matching Exam found"
+                          : "No Exam available...",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   ),
                 )
@@ -166,6 +164,81 @@ class _AllExamScreenState extends State<AllExamScreen> {
           );
         },
       ),
+    );
+  }
+
+  // 📅 FILTER SHEET
+  void _openFilterSheet(BuildContext context) {
+    final state = Provider.of<ExamProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Filter Exams By Date",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 20),
+
+              // SINGLE DATE
+              ListTile(
+                leading: Icon(Icons.calendar_month),
+                title: Text("Select Single Date"),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+
+                  if (picked != null) {
+                    state.filterBySingleDate(picked);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+
+              // DATE RANGE
+              ListTile(
+                leading: Icon(Icons.date_range),
+                title: Text("Select Date Range"),
+                onTap: () async {
+                  final range = await showDateRangePicker(
+                    context: context,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+
+                  if (range != null) {
+                    state.filterByRange(range.start, range.end);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+
+              // CLEAR FILTER
+              if (state.selectedDate != null || state.selectedRange != null)
+                ListTile(
+                  leading: Icon(Icons.close),
+                  title: Text("Clear Filters"),
+                  onTap: () {
+                    state.resetFilter();
+                    Navigator.pop(context);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -76,14 +76,127 @@ class AuthService {
     }).toList();
   }
 
-  Future<Map<String, dynamic>?> getSeatAndRoomDetails({
-    required String regNo,
-    required String department,
-    required DateTime todayDate,
-  }) async {
-    // original logic untouched
+Future<Map<String, dynamic>?> getStudentSeatDetails({
+  required String regNo,
+  required String department,
+  required String sem,
+}) async {
+  final firestore = FirebaseFirestore.instance;
+
+  print("🔍 Starting student seat search...");
+  print("➡ regNo: $regNo");
+  print("➡ department: $department");
+  print("➡ sem: $sem");
+
+  // 1. Load today's exams
+  final today = DateTime.now();
+  final start = DateTime(today.year, today.month, today.day);
+  final end = start.add(const Duration(days: 1));
+
+  print("📅 Searching exams between $start and $end");
+
+  final examQuery = await firestore
+      .collection("Exams")
+      .where("department", isEqualTo: department)
+      .where("sem", isEqualTo: sem)
+      .where("date", isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+      .where("date", isLessThan: Timestamp.fromDate(end))
+      .get();
+
+  print("📘 Exams found: ${examQuery.docs.length}");
+
+  if (examQuery.docs.isEmpty) {
+    print("❌ No exams found for today");
     return null;
   }
+
+  // 2. Check each exam
+  for (var examDoc in examQuery.docs) {
+    final examData = examDoc.data();
+    final examId = examDoc.id;
+
+    print("----------------------------");
+    print("📝 Checking Exam: $examId");
+    print("Subject: ${examData["subject"]}");
+
+    // Load all rooms
+    final roomQuery = await firestore.collection("Rooms").get();
+    print("🏫 Rooms found: ${roomQuery.docs.length}");
+
+    for (var roomDoc in roomQuery.docs) {
+      final roomData = roomDoc.data();
+
+      print("➡ Checking Room: ${roomData["roomName"]}");
+
+      final allSeats = roomData["allSeats"];
+
+      if (allSeats == null || allSeats is! List) {
+        print("⚠ Skipped room: allSeats is NULL or not a LIST");
+        continue;
+      }
+
+      print("🪑 Seats in room: ${allSeats.length}");
+
+      // Check each seat
+      for (var seat in allSeats) {
+        print("🔍 Checking seat: $seat");
+
+        if (seat == null) continue;
+
+        if (seat["examId"] != examId) {
+          print("⛔ Seat examId mismatch: ${seat["examId"]}");
+          continue;
+        }
+
+        if (seat["student"] == null) {
+          print("⛔ Seat has NO STUDENT");
+          continue;
+        }
+
+        final stud = seat["student"];
+
+        print("👤 Student on this seat: ${stud["regNo"]}");
+
+        if (stud["regNo"] == regNo) {
+          print("🎉 MATCH FOUND!");
+          print("Seat No: ${seat["seatNo"]}");
+          print("Room: ${roomData["roomName"]}");
+
+          return {
+            "student": {
+              "name": stud["name"],
+              "regNo": stud["regNo"],
+              "department": stud["department"],
+              "sem": stud["sem"],
+            },
+            "exam": {
+              "examId": examId,
+              "subject": examData["subject"] ?? "",
+              "date": examData["date"],
+              "startTime": examData["startTime"],
+              "endTime": examData["endTime"],
+            },
+            "room": {
+              "roomId": roomDoc.id,
+              "roomName": roomData["roomName"],
+              "seatNo": seat["seatNo"],
+            }
+          };
+        }
+      }
+    }
+  }
+
+  print("❌ No matching seat found in any room");
+  return null;
+}
+
+
+
+
+
+
+
   Future<void> deleteUserAccount(String userId) async {
   try {
     // Fetch user data before deletion for logging
@@ -112,53 +225,64 @@ class AuthService {
   // ===============================================================
 
   /// 🔹 STUDENT SIGN-UP (Firestore only)
-  Future<Map<String, dynamic>?> studentSignUp({
-    required String name,
-    required String studentId,
-    required String password,
-  }) async {
-    try {
-      final cleanId = studentId.trim().toLowerCase();
+/// 🔹 STUDENT SIGN-UP (Firestore)
+Future<Map<String, dynamic>?> studentSignUp({
+  required String name,
+  required String studentId,
+  required String password,
+  required String department,
+  required String sem,
+}) async {
+  try {
+    final cleanId = studentId.trim().toLowerCase();
 
-      final doc = await studentsRef.doc(cleanId).get();
-      if (doc.exists) throw "Student ID already exists";
+    // Check if already exists
+    final doc = await studentsRef.doc(cleanId).get();
+    if (doc.exists) throw "Student ID already exists";
 
-      final data = {
-        "id": cleanId,
-        "name": name.trim(),
-        "studentId": cleanId,
-        "password": password, // hashing if needed
-        "createdAt": Timestamp.now(),
-      };
+    final data = {
+      "studentId": cleanId,
+      "regNo": cleanId,
+      "name": name.trim(),
+      "department": department,
+      "sem": sem,
+      "password": password,
+      "createdAt": Timestamp.now(),
+    };
 
-      await studentsRef.doc(cleanId).set(data);
+    // SAVE using studentId as document ID
+    await studentsRef.doc(cleanId).set(data);
 
-      return data;
-    } catch (e) {
-      log("🔥 Student SignUp Error: $e");
-      rethrow;
-    }
+    return data;
+  } catch (e) {
+    log("🔥 Student SignUp Error: $e");
+    rethrow;
   }
+}
+
 
   /// 🔹 STUDENT LOGIN
-  Future<Map<String, dynamic>?> studentLogin({
-    required String studentId,
-    required String password,
-  }) async {
-    try {
-      final cleanId = studentId.trim().toLowerCase();
+  /// 🔹 STUDENT LOGIN
+Future<Map<String, dynamic>?> studentLogin({
+  required String studentId,
+  required String password,
+}) async {
+  try {
+    final cleanId = studentId.trim().toLowerCase();
 
-      final doc = await studentsRef.doc(cleanId).get();
-      if (!doc.exists) throw "Student not found";
+    final doc = await studentsRef.doc(cleanId).get();
+    if (!doc.exists) throw "Student not found";
 
-      final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>;
 
-      if (data["password"] != password) throw "Invalid password";
+    if (data["password"] != password) throw "Invalid password";
 
-      return data;
-    } catch (e) {
-      log("🔥 Student Login Error: $e");
-      rethrow;
-    }
+    return data;
+  } catch (e) {
+    log("🔥 Student Login Error: $e");
+    rethrow;
   }
+}
+
+
 }

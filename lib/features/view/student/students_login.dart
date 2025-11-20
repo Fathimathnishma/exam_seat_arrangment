@@ -1,6 +1,9 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
+import 'package:bca_exam_managment/features/view/student/student_dashbord.dart';
+import 'package:bca_exam_managment/features/view/student/students_entry_Screen.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
+import 'package:bca_exam_managment/features/view_model/exam_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,15 +18,26 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
   final TextEditingController studentIdController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool isSignIn = true; // Toggle between Sign In / Sign Up
+
+  String? department;
+  String? sem;
+  bool isSignIn = true;
 
   final OutlineInputBorder blueBorder = OutlineInputBorder(
     borderRadius: BorderRadius.circular(6),
     borderSide: const BorderSide(color: Colors.blue, width: 1.5),
   );
 
+  void showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final exam = Provider.of<ExamProvider>(context, listen: false);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Padding(
@@ -50,7 +64,7 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
                   ),
                   const SizedBox(height: 44),
 
-                  // Name (only for Sign Up)
+                  // Name (Sign Up only)
                   if (!isSignIn) ...[
                     const Text("Name:", style: TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 5),
@@ -101,8 +115,65 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
                       focusedBorder: blueBorder,
                     ),
                   ),
+                  const SizedBox(height: 14),
 
-                  const SizedBox(height: 30),
+                  // Department (Signup)
+                  if (!isSignIn) ...[
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        border: blueBorder,
+                        enabledBorder: blueBorder,
+                        focusedBorder: blueBorder,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      ),
+                      value: department,
+                      hint: const Text("Department"),
+                      items: exam.departments
+                          .map(
+                            (dept) => DropdownMenuItem(
+                              value: dept,
+                              child: Text(dept),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          department = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Semester
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        border: blueBorder,
+                        enabledBorder: blueBorder,
+                        focusedBorder: blueBorder,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      ),
+                      value: sem,
+                      hint: const Text("Semester"),
+                      items: exam.semesters
+                          .map(
+                            (s) => DropdownMenuItem(
+                              value: s,
+                              child: Text(s),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          sem = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // Button
                   Center(
                     child: InkWell(
                       onTap: () async {
@@ -110,32 +181,56 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
                         final password = passwordController.text.trim();
                         final name = nameController.text.trim();
 
-                        // Validate fields
-                        if (studentId.isEmpty || password.isEmpty || (!isSignIn && name.isEmpty)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all required fields')),
-                          );
+                        // Basic Validation
+                        if (studentId.isEmpty || password.isEmpty) {
+                          showError("Please fill all required fields");
                           return;
                         }
 
-                        // Sign In or Sign Up
+                        // SignUp validation
+                        if (!isSignIn && (name.isEmpty || department == null || sem == null)) {
+                          showError("Please fill all fields");
+                          return;
+                        }
+
+                        // 🔥 LOGIN or SIGNUP
                         if (isSignIn) {
-                          await state.studentLogin(studentId: studentId, password: password);
+                          await state.studentLogin(
+                            studentId: studentId,
+                            password: password,
+                          );
                         } else {
-                          await state.studentSignUp(studentId: studentId, password: password, name: name);
+                          await state.studentSignUp(
+                            studentId: studentId,
+                            password: password,
+                            name: name,
+                            department: department!,
+                            sem: sem!,
+                          );
                         }
 
                         if (!mounted) return;
 
-                        if (state.currentUser != null) {
+                        // SUCCESS redirect
+                        if (state.currentStudentUser != null) {
+                          // CLEAR FIELDS 🎉
+                          studentIdController.clear();
+                          nameController.clear();
+                          passwordController.clear();
+                          setState(() {
+                            department = null;
+                            sem = null;
+                          });
+
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => const AppRoot()),
+                            MaterialPageRoute(builder: (context) => StudentsEntryScreen()),
                           );
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 45),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 15, horizontal: 45),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(5),
@@ -153,11 +248,13 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
                   ),
 
                   const SizedBox(height: 20),
+
+                  // Toggle Login / Signup
                   Center(
                     child: InkWell(
                       onTap: () {
                         setState(() {
-                          isSignIn = !isSignIn; // Toggle mode
+                          isSignIn = !isSignIn;
                         });
                       },
                       child: Text(

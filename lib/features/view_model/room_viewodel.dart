@@ -34,9 +34,22 @@ class RoomProvider extends ChangeNotifier {
   // Search and filter
   String? selectedCategory;
   String searchText = "";
+String? selectedBlock = "All";
+
 
   // To track whether we are updating an existing room
   String? updatingRoomId;
+
+//filter by block
+
+List<String> get blockList {
+  final blocks = allRooms.map((e) => e.roomName!).toSet().toList();
+  blocks.sort();
+  return ["All", ...blocks];
+}
+
+
+
 
   /// Fetch rooms
   Future<void> fetchRooms() async {
@@ -61,35 +74,46 @@ class RoomProvider extends ChangeNotifier {
     filterExams();
   }
 
-  void filterExams() {
-    filteredRooms = allRooms.where((event) {
-      final matchesName =
-          selectedCategory == null || selectedCategory == "All"
-              ? true
-              : (event.roomName?.toLowerCase() ?? "") ==
-                  selectedCategory!.toLowerCase();
+ void filterExams() {
+  filteredRooms = allRooms.where((event) {
 
-      final matchesCode = searchText.isEmpty
-          ? true
-          : event.roomName!.toLowerCase().contains(searchText) ||
-              event.roomNo.toLowerCase().contains(searchText);
+    // roomName IS block name
+    final matchesBlock = selectedBlock == "All"
+        ? true
+        : event.roomName!.toLowerCase() == selectedBlock!.toLowerCase();
 
-      return matchesName && matchesCode;
-    }).toList();
+    final matchesSearch = searchText.isEmpty
+        ? true
+        : event.roomName!.toLowerCase().contains(searchText) ||
+            event.roomNo.toLowerCase().contains(searchText);
 
-    // Reset when filters are empty
-    if (filteredRooms.isEmpty &&
-        searchText.isEmpty &&
-        (selectedCategory == null || selectedCategory == "All")) {
-      filteredRooms = List.from(allRooms);
-    }
+    return matchesBlock && matchesSearch;
+  }).toList();
 
-    notifyListeners();
-  }
+  notifyListeners();
+}
 
-  String getAvailability(int capacity) {
-    return capacity > 0 ? 'Available' : 'Not Available';
-  }
+String getAvailability(RoomModel room) {
+  final int totalSeats = room.capacity;
+
+  final List seats = room.allSeats ?? [];
+
+  // Count assigned seats
+  final int assigned = seats
+      .where((s) =>
+          s["student"] != null &&
+          ((s["student"] is StudentsModel &&
+                  (s["student"] as StudentsModel).regNo.isNotEmpty) ||
+              (s["student"] is Map &&
+                  (s["student"]["regNo"] ?? "").toString().isNotEmpty)))
+      .length;
+
+  final int availableSeats = totalSeats - assigned;
+
+  // Only check if ANY seat is available
+  return availableSeats > 0 ? "Available" : "Not Available";
+}
+
 
   /// Pre-fill controllers for updating
   void setRoomForUpdate(RoomModel room) {
@@ -418,61 +442,76 @@ Future<void> assignStudentsToRoom({
     notifyListeners(); // End loading, refresh UI
   }
 }
-
 Map<String, dynamic> arrangeSeatsWithColors(RoomModel room) {
-  final int totalSeats = room.capacity;
-  final seats = List<Map<String, dynamic>>.generate(
-    totalSeats,
-    (i) => {
-      "seatNo": "S${i + 1}",
-      "student": null,
-      "exam": "Empty",
-      "color": Color(0xFFCCCCCC).value,
-    },
-  );
+  final int total = room.capacity;
 
-  final examQueues = <String, List<StudentsModel>>{};
-  final examColors = <String, int>{};
+  // STEP 1: Create empty seats
+  final seats = List.generate(total, (i) => {
+        "seatNo": "S${i + 1}",
+        "student": null,
+        "exam": "Empty",
+        "color": const Color(0xFFCCCCCC).value,
+      });
+
   final random = math.Random();
+  final examColors = <String, int>{};
 
-  // Prepare queues and colors for all exams
-  room.membersInRoom.forEach((examId, students) {
-    // Remove duplicates by regNo
-    final uniqueStudents = {
-      for (var s in students) s.regNo!: s
+  // STEP 2: Collect unique students for each exam
+  final examStudents = <String, List<StudentsModel>>{};
+  room.membersInRoom.forEach((examId, list) {
+    final unique = {
+      for (var s in list) s.regNo!: s,
     }.values.toList();
 
-    examQueues[examId] = uniqueStudents;
-    examColors[examId] = Color.fromARGB(
-      255,
-      random.nextInt(200) + 30,
-      random.nextInt(200) + 30,
-      random.nextInt(200) + 30,
-    ).value;
+    if (unique.isNotEmpty) {
+      examStudents[examId] = unique;
+
+      examColors[examId] = Color.fromARGB(
+        255,
+        random.nextInt(200) + 30,
+        random.nextInt(200) + 30,
+        random.nextInt(200) + 30,
+      ).value;
+    }
   });
 
-  int seatIndex = 0;
+  // STEP 3: Sort exams by largest student count
+  final sortedExams = examStudents.keys.toList()
+    ..sort((a, b) => examStudents[b]!.length.compareTo(examStudents[a]!.length));
 
-  // Round-robin placement across exams
-  while (examQueues.values.any((q) => q.isNotEmpty) && seatIndex < totalSeats) {
-    for (var examId in examQueues.keys) {
-      final queue = examQueues[examId]!;
-      if (queue.isEmpty) continue;
+  int filled = 0; // How many seats filled so far
 
-      // Find next empty seat
-      while (seatIndex < totalSeats && seats[seatIndex]['student'] != null) {
-        seatIndex++;
+  for (final examId in sortedExams) {
+    final students = examStudents[examId]!;
+
+    for (final student in students) {
+      if (filled >= total) break;
+
+      // Calculate zig-zag index
+      int index;
+      if (filled < (total / 2).ceil()) {
+        // First half → even indexes: 0,2,4...
+        index = filled * 2;
+      } else {
+        // Second half → odd indexes: 1,3,5...
+        index = (filled - (total / 2).ceil()) * 2 + 1;
       }
-      if (seatIndex >= totalSeats) break;
 
-      final student = queue.removeAt(0);
-      seats[seatIndex] = {
-        "seatNo": "S${seatIndex + 1}",
+      if (index >= total) {
+        // If odd index overflows, place in next free seat
+        index = seats.indexWhere((e) => e["student"] == null);
+        if (index == -1) break;
+      }
+
+      // Fill seat
+      seats[index] = {
+        "seatNo": "S${index + 1}",
         "student": student.toMap(),
         "exam": examId,
         "color": examColors[examId],
       };
-      seatIndex++;
+
+      filled++;
     }
   }
 
@@ -481,5 +520,6 @@ Map<String, dynamic> arrangeSeatsWithColors(RoomModel room) {
     "examColors": examColors,
   };
 }
+
 
 }

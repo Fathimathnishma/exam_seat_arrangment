@@ -15,10 +15,10 @@ class AuthProvider extends ChangeNotifier {
   UserModel? currentUser; 
   StudentsModel? currentStudentUser; // <-- Already existed
   bool isLoading = false;
-  Map<String, dynamic>? _seatDetails;
+  Map<String, dynamic>? seatDetails;
   List<UserModel> users = [];
+  List <StudentsModel>students=[];
 
-  Map<String, dynamic>? get seatDetails => _seatDetails;
 
   /// 🔹 Set today’s date
   void setTodayDate() {
@@ -113,16 +113,21 @@ class AuthProvider extends ChangeNotifier {
     required String name,
     required String studentId,
     required String password,
+    required String department,
+    required String sem
   }) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final result = await _authRepo.studentSignUp(
-        name: name,
-        studentId: studentId,
-        password: password,
-      );
+     final result = await _authRepo.studentSignUp(
+  name: name,
+  studentId: studentId,
+  password: password,
+  department: department,   // <-- NEW
+  sem: sem,                 // <-- NEW
+);
+
 
      if (result != null) {
         currentStudentUser = StudentsModel(
@@ -248,21 +253,23 @@ class AuthProvider extends ChangeNotifier {
   Future<void> fetchSeatDetails({
     required String regNo,
     required String department,
-    required DateTime todayDate,
+    required String sem,
   }) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      _seatDetails = await _authRepo.fetchSeatAndRoom(
+      seatDetails = await _authRepo.fetchSeatAndRoom(
         regNo: regNo,
         department: department,
-        todayDate: todayDate,
+        sem: sem,
       );
 
-      if (_seatDetails != null && _seatDetails!.isNotEmpty) {
+      if (seatDetails != null && seatDetails!.isNotEmpty) {
         showCustomToast(message: 'Seat details loaded!');
       } else {
+
+        log("not found");
         showCustomToast(message: 'No seat details found.', isError: true);
       }
     } catch (e) {

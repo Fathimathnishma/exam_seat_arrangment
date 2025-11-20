@@ -2,6 +2,7 @@ import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/features/models/exam_model.dart';
 import 'package:bca_exam_managment/features/models/room_model.dart';
 import 'package:bca_exam_managment/features/models/student_model.dart';
+import 'package:bca_exam_managment/features/view/teachers/rooms/pdf_preview.dart';
 import 'package:bca_exam_managment/features/view/teachers/select_students.dart';
 import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
 import 'package:bca_exam_managment/features/view_model/exam_viewmodel.dart';
@@ -10,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class RoomDetailScreen extends StatefulWidget {
-  final RoomModel roomModel;
+  final RoomModel roomModel; // ✔ required
   const RoomDetailScreen({super.key, required this.roomModel});
 
   @override
@@ -18,22 +19,36 @@ class RoomDetailScreen extends StatefulWidget {
 }
 
 class _RoomDetailScreenState extends State<RoomDetailScreen> {
+  RoomModel? updatedRoom; // ✔ this holds the refreshed room
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final examProvider = Provider.of<ExamProvider>(context, listen: false);
       await examProvider.fetchExamsbyId(widget.roomModel.exams);
+
+      final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+
+      setState(() {
+        updatedRoom = roomProvider.allRooms.firstWhere(
+          (r) => r.id == widget.roomModel.id,
+          orElse: () => widget.roomModel,
+        );
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final room = widget.roomModel;
-    final roomName = room.roomName ?? 'N/A';
+    final room = updatedRoom ?? widget.roomModel;
+
+    final roomName = room.roomName ?? "N/A";
     final capacity = room.capacity;
     final roomNo = room.roomNo;
-    final matrix = room.layout ?? '2';
+    final matrix = room.layout ?? "2";
+
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -57,18 +72,44 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        onPressed: () {
+   floatingActionButton: Consumer<RoomProvider>(
+  builder: (context, roomProvider, _) {
+    final assigned = room.allSeats.where(
+      (s) => s["student"] != null && s["student"] != "Empty",
+    ).length;
+
+    final isFull = assigned >= room.capacity;
+
+    return FloatingActionButton(
+      backgroundColor: AppColors.primary,
+      onPressed: () {
+        if (isFull) {
+          // 👉 DOWNLOAD PDF
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RoomPdfScreen(room: room),
+            ),
+          );
+        } else {
+          // 👉 ADD STUDENTS
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => SelectExamDemo(roomId: room.id!),
             ),
           );
-        },
-        child: const Icon(Icons.add, color: Colors.white),
+        }
+      },
+      child: Icon(
+        isFull ? Icons.download : Icons.add,
+        color: Colors.white,
       ),
+    );
+  },
+),
+
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(8.0),
         child: Consumer2<ExamProvider, RoomProvider>(
@@ -79,7 +120,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       );
     }
             final exams = examState.examinRoom;
-            final availability = roomState.getAvailability(capacity);
+            final availability = roomState.getAvailability(room);
              if (examState.isLoading) {
           // Simple loading indicator
           return const Center(
@@ -201,8 +242,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   // ---------------- Seat Arrangement ----------------
-  // ---------------- Seat Arrangement ----------------
-Widget _buildSeatArrangement(List<Map<String, dynamic>> allSeats, String matrix, List<ExamModel> exams) {
+ // ---------------- Seat Arrangement ----------------
+Widget _buildSeatArrangement(
+    List<Map<String, dynamic>> allSeats,
+    String matrix,
+    List<ExamModel> exams) {
   if (allSeats.isEmpty) {
     return const Padding(
       padding: EdgeInsets.all(12.0),
@@ -214,12 +258,12 @@ Widget _buildSeatArrangement(List<Map<String, dynamic>> allSeats, String matrix,
   }
 
   final Map<String, Map<String, dynamic>> examSummary = {};
+
   for (var seat in allSeats) {
     final examId = seat['exam'];
     final colorValue = seat['color'];
     final color = colorValue is int ? Color(colorValue) : Colors.grey;
 
-    // Skip empty seats
     if (examId == null || examId == "Empty") continue;
 
     final examExists = exams.any((e) => e.examId == examId);
@@ -230,6 +274,8 @@ Widget _buildSeatArrangement(List<Map<String, dynamic>> allSeats, String matrix,
   }
 
   int eachSideCols = matrix == '3' ? 3 : 2;
+
+  // Split seats into left & right
   final int leftCount = allSeats.length ~/ 2;
   final leftSeats = allSeats.sublist(0, leftCount);
   final rightSeats = allSeats.sublist(leftCount);
@@ -244,6 +290,7 @@ Widget _buildSeatArrangement(List<Map<String, dynamic>> allSeats, String matrix,
       ),
       const SizedBox(height: 6),
 
+      // ---------------- Legend ----------------
       if (examSummary.isEmpty)
         const Padding(
           padding: EdgeInsets.all(8.0),
@@ -277,23 +324,43 @@ Widget _buildSeatArrangement(List<Map<String, dynamic>> allSeats, String matrix,
           );
 
           return _buildLegendRow(color, exam.courseName, count);
-        }).toList(),
+        }),
 
       const SizedBox(height: 20),
 
+      // ---------------- LEFT & RIGHT GRID ----------------
       Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: _buildGrid(leftSeats, crossAxisCount: eachSideCols)),
+          Expanded(
+            child: _buildGrid(
+              leftSeats,
+              crossAxisCount: eachSideCols,
+              startSeatNo: 1,
+            ),
+          ),
+
           const SizedBox(width: 20),
-          Expanded(child: _buildGrid(rightSeats, crossAxisCount: eachSideCols)),
+
+          Expanded(
+            child: _buildGrid(
+              rightSeats,
+              crossAxisCount: eachSideCols,
+              startSeatNo: leftSeats.length + 1, // Continuous numbering
+            ),
+          ),
         ],
       ),
     ],
   );
 }
 
-Widget _buildGrid(List<Map<String, dynamic>> seats, {required int crossAxisCount}) {
+// ---------------- GRID with continuous seat numbering ----------------
+Widget _buildGrid(
+  List<Map<String, dynamic>> seats, {
+  required int crossAxisCount,
+  required int startSeatNo,
+}) {
   return GridView.builder(
     physics: const NeverScrollableScrollPhysics(),
     shrinkWrap: true,
@@ -306,18 +373,15 @@ Widget _buildGrid(List<Map<String, dynamic>> seats, {required int crossAxisCount
     ),
     itemBuilder: (context, index) {
       final seat = seats[index];
-
-      if (seat is! Map<String, dynamic>) return const SizedBox.shrink();
-
       final student = seat['student'];
+
       final colorValue = seat['color'];
       final color = colorValue is int
           ? Color(colorValue)
           : (colorValue is Color ? colorValue : Colors.grey);
 
-      final seatNo = 'S${index + 1}';
+      final seatNo = 'S${startSeatNo + index}'; // ✔ continuous numbering
 
-      // Safely fetch regNo for display
       String regNo = '';
       if (student is StudentsModel) {
         regNo = student.regNo;
@@ -335,7 +399,7 @@ Widget _buildGrid(List<Map<String, dynamic>> seats, {required int crossAxisCount
           children: [
             Center(
               child: Text(
-                regNo.isNotEmpty ? regNo : '-', // Display '-' if student is null
+                regNo.isNotEmpty ? regNo : '-',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,

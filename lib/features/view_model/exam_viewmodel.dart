@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'package:bca_exam_managment/features/models/exam_model.dart';
@@ -133,12 +132,11 @@ void filterExams() {
     selectedDepartment = exam.department;
     selectedSem = exam.sem;
     selectedDate = _parseDate(exam.date);
-    timeController.text =
-        exam.duration.split('h')[0] +
-        ":" +
-        exam.duration.split(' ')[1]; // simple split
-    endTimeController.text = ""; // optional: user can edit
-    _students = exam.students!;
+    dateController.text = exam.date ?? "";
+    // Use stored start/end times instead of deriving from duration
+    timeController.text = exam.startTime ?? "";
+    endTimeController.text = exam.endTime ?? "";
+    _students = exam.students ?? [];
     notifyListeners();
   }
 
@@ -263,13 +261,8 @@ void filterExams() {
 ///FETCH TODAY EXAM
 
    void fetchTodaysExams() {
-    final now = DateTime.now();
-    todaysExams = allExams.where((exam) {
-      final examDate = DateTime.fromMillisecondsSinceEpoch(int.parse(exam.date)); // adjust if your field is different
-      return examDate.year == now.year &&
-          examDate.month == now.month &&
-          examDate.day == now.day;
-    }).toList();
+    final today = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    todaysExams = allExams.where((exam) => exam.date == today).toList();
     notifyListeners();
   }
 
@@ -321,52 +314,62 @@ void filterExams() {
   }
 
   /// Update exam
-  Future<void> updateExam() async {
-    if (updatingExamId == null) {
-      errorMessage = "Exam ID is null";
-      notifyListeners();
-      return;
-    }
-
-    isLoading = true;
+ Future<void> updateExam() async {
+  if (updatingExamId == null) {
+    errorMessage = "Exam ID is null";
     notifyListeners();
-
-    try {
-      final updatedExam = ExamModel(
-        examId: updatingExamId,
-        courseName: examNameController.text,
-        courseId: courseIdController.text,
-        duration: getDuration(),
-        department: selectedDepartment!,
-        sem: selectedSem!,
-        date:
-            selectedDate != null
-                ? "${selectedDate!.day.toString().padLeft(2, '0')}-"
-                    "${selectedDate!.month.toString().padLeft(2, '0')}-"
-                    "${selectedDate!.year}"
-                : "",
-        createdAt: Timestamp.now(),
-        students: _students,
-        startTime: timeController.text,
-         endTime: endTimeController.text,
-      );
-
-      await _examRepo.updateExam(updatedExam);
-
-      clearData();
-      clearStudents();
-      updatingExamId = null;
-      await fetchExams();
-      filterExams();
-
-    } catch (e) {
-      errorMessage = e.toString();
-      notifyListeners();
-    }
-
-    isLoading = false;
-    notifyListeners();
+    return;
   }
+
+  isLoading = true;
+  notifyListeners();
+
+  try {
+    // Keep original exam first
+    final old = allExams.firstWhere((e) => e.examId == updatingExamId);
+
+    final updatedExam = ExamModel(
+      examId: updatingExamId,
+      courseName: examNameController.text,
+      courseId: courseIdController.text,
+      duration: getDuration(),
+      department: selectedDepartment ?? old.department,
+      sem: selectedSem ?? old.sem,
+
+      date: selectedDate != null
+          ? "${selectedDate!.day.toString().padLeft(2, '0')}-"
+              "${selectedDate!.month.toString().padLeft(2, '0')}-"
+              "${selectedDate!.year}"
+          : old.date,
+
+      createdAt: old.createdAt, // keep
+
+      students: _students,
+      duplicatestudents: _students,
+      totalStudents: _students.length,
+
+      startTime: timeController.text,
+      endTime: endTimeController.text,
+    );
+
+    await _examRepo.updateExam(updatedExam);
+
+    clearData();
+    clearStudents();
+    updatingExamId = null;
+
+    await fetchExams();
+    filterExams();
+
+  } catch (e) {
+    errorMessage = e.toString();
+  }
+
+  isLoading = false;
+  notifyListeners();
+  clearData();
+}
+
 void deleteExamFromRoom(void Function() onSuccess, String roomId, String examId) async {
   isLoading = true;
   notifyListeners();
@@ -380,13 +383,9 @@ void deleteExamFromRoom(void Function() onSuccess, String roomId, String examId)
     // Update roomofExams list
     final roomIndex = roomofExams.indexWhere((r) => r.id == roomId);
     if (roomIndex != -1) {
-      // Convert examId string to int
-      final examIdInt = int.tryParse(examId);
-      if (examIdInt != null) {
-        // Remove the exam and reassign list to trigger UI update
-        roomofExams[roomIndex].exams =
-            roomofExams[roomIndex].exams.where((e) => e != examIdInt).toList();
-      }
+      // Remove by matching string representation (defensive)
+      roomofExams[roomIndex].exams =
+          roomofExams[roomIndex].exams.where((e) => e.toString() != examId).toList();
     }
 
     // Update examinRoom list
@@ -402,15 +401,6 @@ void deleteExamFromRoom(void Function() onSuccess, String roomId, String examId)
     notifyListeners();
   }
 }
-
-
-
-
-   
-
-
-
-
 
   /// Delete exam
   Future<void> deleteExam(String examId) async {
@@ -430,6 +420,44 @@ void deleteExamFromRoom(void Function() onSuccess, String roomId, String examId)
     isLoading = false;
     notifyListeners();
   }
+  // Date
+DateTime? selectedExamDate;
+DateTimeRange? selectedRange;
+
+void filterBySingleDate(DateTime date) {
+  selectedExamDate = date;
+  selectedRange = null;
+
+  final formatted = DateFormat('dd-MM-yyyy').format(date);
+
+  filteredExams = allExams.where((exam) {
+    return exam.date == formatted;
+  }).toList();
+
+  notifyListeners();
+}
+
+void filterByRange(DateTime start, DateTime end) {
+  selectedRange = DateTimeRange(start: start, end: end);
+  selectedExamDate = null;
+
+  filteredExams = allExams.where((exam) {
+    final examDate = DateFormat('dd-MM-yyyy').parse(exam.date);
+
+    return examDate.isAfter(start.subtract(const Duration(days: 1))) &&
+           examDate.isBefore(end.add(const Duration(days: 1)));
+  }).toList();
+
+  notifyListeners();
+}
+
+void resetFilter() {
+  selectedExamDate = null;
+  selectedRange = null;
+  filteredExams = List.from(allExams);
+  notifyListeners();
+}
+
 
   /// Clear all form data
   void clearData() {

@@ -40,12 +40,13 @@ class AuthRepository {
   Future<Map<String, dynamic>?> fetchSeatAndRoom({
     required String regNo,
     required String department,
-    required DateTime todayDate,
+    required String sem,
+   
   }) async {
-    return await _authService.getSeatAndRoomDetails(
+    return await _authService.getStudentSeatDetails(
       regNo: regNo,
       department: department,
-      todayDate: todayDate,
+      sem:sem ,
     );
   }
 
@@ -57,11 +58,16 @@ class AuthRepository {
     required String name,
     required String studentId,
     required String password,
+    required String department,
+    required String sem,
   }) {
     return _authService.studentSignUp(
       name: name,
       studentId: studentId,
       password: password,
+       department: department, 
+       sem: sem,
+
     );
   }
 
