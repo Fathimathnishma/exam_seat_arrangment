@@ -1,7 +1,7 @@
+import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:bca_exam_managment/core/utils/app_colors.dart';
 
 class StudentDashboard extends StatelessWidget {
   const StudentDashboard({super.key});
@@ -10,7 +10,10 @@ class StudentDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<AuthProvider>(context);
 
-    final seatInfo = provider.seatDetails; // Map<String, dynamic>?
+    final seatInfo = provider.seatDetails;
+
+    /// Safely access student information
+    final studentInfo = seatInfo?["seatData"]?["student"];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -37,41 +40,51 @@ class StudentDashboard extends StatelessWidget {
                     style: TextStyle(color: AppColors.textColor),
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _infoBox("Your Name: ${seatInfo['name']}"),
-                      SizedBox(height: 15),
-
-                      _infoBox("Your Register Number: ${seatInfo['regNo']}"),
-                      SizedBox(height: 15),
-
-                      _infoBox("Your Department: ${seatInfo['department']}"),
-                      SizedBox(height: 15),
-
-                      _infoBox("Your Room Number: ${seatInfo['roomNo']}"),
-                      SizedBox(height: 15),
-
-                      _infoBox("Your Seat Number: ${seatInfo['seatNo']}"),
-                      SizedBox(height: 40),
-
-                      Text(
-                        "Please ensure all details (Name, Register Number, Department, Room Number, Seat Number) are correct.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.textColor,
-                          fontSize: 14,
-                        ),
+              : studentInfo == null
+                  ? Center(
+                      child: Text(
+                        "Student data missing in seat record",
+                        style: TextStyle(color: Colors.red),
                       ),
-                    ],
-                  ),
-                ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _infoBox("Your Name: ${studentInfo['name']}"),
+                          SizedBox(height: 15),
+
+                          _infoBox("Your Register Number: ${studentInfo['regNo']}"),
+                          SizedBox(height: 15),
+
+                          _infoBox("Your Department: ${studentInfo['department']}"),
+                          SizedBox(height: 15),
+_infoBox("Your Room Code: ${seatInfo['roomCode'] ?? 'N/A'}"),
+SizedBox(height: 15),
+
+_infoBox("Your Room Name: ${seatInfo['roomName'] ?? 'N/A'}"),
+SizedBox(height: 15),
+
+_infoBox("Your Seat Number: ${seatInfo['seatData']?['seatNo'] ?? 'N/A'}"),
+SizedBox(height: 40),
+
+
+
+                          Text(
+                            "Please ensure all details (Name, Register Number, Department, Room Number, Seat Number) are correct.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.textColor,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
     );
   }
 
-  // UI Box Component
   Widget _infoBox(String text) {
     return Container(
       padding: EdgeInsets.all(12),

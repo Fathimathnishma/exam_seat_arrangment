@@ -1,7 +1,10 @@
 import 'dart:developer';
+import 'package:bca_exam_managment/features/models/student_model.dart';
 import 'package:bca_exam_managment/features/models/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/intl.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,10 +18,42 @@ class AuthService {
   // 🔹 EXISTING ADMIN METHODS (UNTOUCHED)
   // ===============================================================
 
-  Future<UserModel?> addUserByAdmin({required UserModel userModel}) async {
-    await usersRef.doc(userModel.id).set(userModel.toMap());
-    return userModel;
+Future<UserModel?> addUserByAdmin({required UserModel userModel}) async {
+  try {
+    // ⚡ Create a secondary Firebase app (does NOT affect main login)
+    final secondaryApp = await Firebase.initializeApp(
+      name: 'SecondaryApp',
+      options: Firebase.app().options,
+    );
+
+    // ⚡ Create a separate auth instance
+    final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+
+    // ⚡ Create teacher/admin WITHOUT logging out current admin
+    UserCredential credential =
+        await secondaryAuth.createUserWithEmailAndPassword(
+      email: userModel.email,
+      password: userModel.password,
+    );
+
+    final uid = credential.user!.uid;
+
+    final updatedUser = userModel.copyWith(id: uid);
+
+    // ⚡ Save teacher/admin details in Firestore
+    await usersRef.doc(uid).set(updatedUser.toMap());
+
+    // ⚡ Cleanup secondary auth
+    await secondaryAuth.signOut();
+    await secondaryApp.delete();
+
+    return updatedUser;
+  } catch (e) {
+    log("❌ Error adding admin/teacher: $e");
+    return null;
   }
+}
+
 
   Future<UserModel?> loginWithEmail({
     required String email,
@@ -75,126 +110,166 @@ class AuthService {
       return UserModel.fromMap(doc.data() as Map<String, dynamic>);
     }).toList();
   }
+  // Future<List<StudentsModel>> fetchCurrentStudentUser() async {
+  //   final query = await studentsRef.get();
+  //   return query.docs.map((doc) {
+  //     return StudentsModel.fromMap(doc.data() as Map<String, dynamic>);
+  //   }).toList();
+  // }
 
-Future<Map<String, dynamic>?> getStudentSeatDetails({
+/// 🔹 Fetch Seat + Room Details
+Future<Map<String, dynamic>?> fetchSeatAndRoom({
   required String regNo,
   required String department,
   required String sem,
 }) async {
-  final firestore = FirebaseFirestore.instance;
+  try {
+    log("🔍 Starting fetchSeatAndRoom()");
+    log("📝 Inputs => regNo: $regNo | dept: $department | sem: $sem");
 
-  print("🔍 Starting student seat search...");
-  print("➡ regNo: $regNo");
-  print("➡ department: $department");
-  print("➡ sem: $sem");
+    // -----------------------------------------------------------
+    // 1) FETCH EXAM
+    // -----------------------------------------------------------
+    final examQuery = await _firestore
+        .collection('exams')
+        .where('department', isEqualTo: department)
+        .where('sem', isEqualTo: sem)
+        .get();
 
-  // 1. Load today's exams
-  final today = DateTime.now();
-  final start = DateTime(today.year, today.month, today.day);
-  final end = start.add(const Duration(days: 1));
+    if (examQuery.docs.isEmpty) {
+      log("❌ No exam found for dept+sem");
+      return null;
+    }
 
-  print("📅 Searching exams between $start and $end");
-
-  final examQuery = await firestore
-      .collection("Exams")
-      .where("department", isEqualTo: department)
-      .where("sem", isEqualTo: sem)
-      .where("date", isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-      .where("date", isLessThan: Timestamp.fromDate(end))
-      .get();
-
-  print("📘 Exams found: ${examQuery.docs.length}");
-
-  if (examQuery.docs.isEmpty) {
-    print("❌ No exams found for today");
-    return null;
-  }
-
-  // 2. Check each exam
-  for (var examDoc in examQuery.docs) {
-    final examData = examDoc.data();
+    final examDoc = examQuery.docs.first;
     final examId = examDoc.id;
 
-    print("----------------------------");
-    print("📝 Checking Exam: $examId");
-    print("Subject: ${examData["subject"]}");
+    log("📌 Exam ID found: $examId");
 
-    // Load all rooms
-    final roomQuery = await firestore.collection("Rooms").get();
-    print("🏫 Rooms found: ${roomQuery.docs.length}");
+    // -----------------------------------------------------------
+   // -----------------------------------------------------------
+// 1B) APPLY 15-MINUTE RULE (startTime is STRING -> e.g "10:00 AM")
+// -----------------------------------------------------------
+final examData = examDoc.data();
+final startTimeString = examData['startTime']; // String like "10:00 AM"
 
-    for (var roomDoc in roomQuery.docs) {
-      final roomData = roomDoc.data();
-
-      print("➡ Checking Room: ${roomData["roomName"]}");
-
-      final allSeats = roomData["allSeats"];
-
-      if (allSeats == null || allSeats is! List) {
-        print("⚠ Skipped room: allSeats is NULL or not a LIST");
-        continue;
-      }
-
-      print("🪑 Seats in room: ${allSeats.length}");
-
-      // Check each seat
-      for (var seat in allSeats) {
-        print("🔍 Checking seat: $seat");
-
-        if (seat == null) continue;
-
-        if (seat["examId"] != examId) {
-          print("⛔ Seat examId mismatch: ${seat["examId"]}");
-          continue;
-        }
-
-        if (seat["student"] == null) {
-          print("⛔ Seat has NO STUDENT");
-          continue;
-        }
-
-        final stud = seat["student"];
-
-        print("👤 Student on this seat: ${stud["regNo"]}");
-
-        if (stud["regNo"] == regNo) {
-          print("🎉 MATCH FOUND!");
-          print("Seat No: ${seat["seatNo"]}");
-          print("Room: ${roomData["roomName"]}");
-
-          return {
-            "student": {
-              "name": stud["name"],
-              "regNo": stud["regNo"],
-              "department": stud["department"],
-              "sem": stud["sem"],
-            },
-            "exam": {
-              "examId": examId,
-              "subject": examData["subject"] ?? "",
-              "date": examData["date"],
-              "startTime": examData["startTime"],
-              "endTime": examData["endTime"],
-            },
-            "room": {
-              "roomId": roomDoc.id,
-              "roomName": roomData["roomName"],
-              "seatNo": seat["seatNo"],
-            }
-          };
-        }
-      }
-    }
-  }
-
-  print("❌ No matching seat found in any room");
+if (startTimeString == null) {
+  log("⚠️ Missing startTime in exam document");
   return null;
 }
 
+final now = DateTime.now();
 
+// Convert string "10:00 AM" → DateTime object (time only)
+final parsedTime = DateFormat("hh:mm a").parse(startTimeString);
 
+// Attach today's date
+final examDateTime = DateTime(
+  now.year,
+  now.month,
+  now.day,
+  parsedTime.hour,
+  parsedTime.minute,
+);
 
+final minutesRemaining = examDateTime.difference(now).inMinutes;
 
+log("⏳ Minutes remaining for exam: $minutesRemaining");
+
+// BLOCK IF MORE THAN 15 MIN REMAINING
+if (minutesRemaining > 15) {
+  log("❌ Too early to show seat");
+  return {
+    "allowed": false,
+    "message": "Seat will be visible only 15 minutes before the exam.",
+    "minutesRemaining": minutesRemaining,
+  };
+}
+
+    // -----------------------------------------------------------
+    // 2) FETCH ROOMS THAT CONTAIN THIS EXAM
+    // -----------------------------------------------------------
+    final roomsQuery = await _firestore
+        .collection('Rooms')
+        .where('exams', arrayContains: examId)
+        .get();
+
+    if (roomsQuery.docs.isEmpty) {
+      log("❌ No rooms contain this exam");
+      return null;
+    }
+
+    // -----------------------------------------------------------
+    // 3) CHECK EACH ROOM FOR THE STUDENT'S SEAT
+    // -----------------------------------------------------------
+    for (final roomDoc in roomsQuery.docs) {
+      final roomData = roomDoc.data();
+      final roomId = roomDoc.id;
+
+      log("🏫 Checking Room: $roomId");
+
+      final allSeats = roomData['allSeats'];
+
+      if (allSeats is! List || allSeats.isEmpty) {
+        log("⚠️ Room $roomId has no valid allSeats list");
+        continue;
+      }
+
+      // -----------------------------------------------------------
+      // 4) CHECK EACH SEAT FOR MATCHING regNo
+      // -----------------------------------------------------------
+      for (int i = 0; i < allSeats.length; i++) {
+        final seat = allSeats[i];
+
+        if (seat is! Map) continue;
+        final student = seat['student'];
+        if (student is! Map) continue;
+
+        final foundRegNo = student['regNo'];
+
+        if (foundRegNo == regNo) {
+          log("✅ Student found in Room $roomId at seat index $i");
+
+          final roomCode =
+              roomData["roomNo"] ?? roomData[""] ?? "N/A";
+
+          final roomName =
+              roomData["roomName"] ?? roomData["name"] ?? "N/A";
+
+          // FINAL RETURN WITH 15-MINUTE RULE PASSED + ROOM INFO
+          return {
+            "allowed": true, // seat can be shown now
+            "examId": examId,
+            "roomId": roomId,
+            "roomCode": roomCode,
+            "roomName": roomName,
+            "seatData": {
+              "seatNo": i + 1,
+              "exam": seat['exam'],
+              "color": seat['color'],
+              "student": student,
+            },
+            "roomData": {
+              ...roomData,
+              "roomCode": roomCode,
+              "roomName": roomName,
+            },
+          };
+        }
+      }
+
+      log("❌ Student not in room: $roomId");
+    }
+
+    log("❌ Student not found in ANY room");
+    return null;
+
+  } catch (e, st) {
+    log("🔥 ERROR in fetchSeatAndRoom(): $e");
+    log("📌 STACKTRACE: $st");
+    return null;
+  }
+}
 
 
   Future<void> deleteUserAccount(String userId) async {

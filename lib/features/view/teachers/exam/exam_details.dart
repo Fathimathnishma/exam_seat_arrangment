@@ -246,6 +246,7 @@ void initState() {
                               roomNo: data.roomNo,
                               capacity: data.capacity?.toString() ?? "0",
                               layout: data.layout ?? "Unknown",
+                              visibleMenu: false,
                             ),
                           );
                         },

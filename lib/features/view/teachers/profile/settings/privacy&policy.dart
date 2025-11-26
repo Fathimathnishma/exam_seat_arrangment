@@ -125,7 +125,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               SizedBox(height: 6),
               Text(
                 'If you have any questions or concerns about this Privacy Policy, please contact us at:\n\n'
-                '📧 Email: support@example.com\n'
+                '📧 Email: bcafinalyearproject2k24@gmail.com\n'
                 '📞 Phone: +91 9876543210',
                 style: TextStyle(fontSize: 16),
               ),

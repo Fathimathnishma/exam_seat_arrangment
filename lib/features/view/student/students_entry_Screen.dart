@@ -31,19 +31,7 @@ class _StudentsEntryScreenState extends State<StudentsEntryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(6),
-            child: Icon(Icons.arrow_back, color: AppColors.textColor),
-          ),
-        ),
-      ),
+   
       body: Consumer<AuthProvider>(
         builder: (BuildContext context, state, Widget? child) { 
           return  SingleChildScrollView(
@@ -84,6 +72,7 @@ class _StudentsEntryScreenState extends State<StudentsEntryScreen> {
                     focusedBorder: blueBorder,
                   ),
                   keyboardType: TextInputType.name,
+                   textCapitalization: TextCapitalization.characters,  
                 ),
                 SizedBox(height: 20),
         

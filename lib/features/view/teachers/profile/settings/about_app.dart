@@ -33,7 +33,7 @@ class AboutAppPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Exam-Friend',
+                    'EduSeat',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
@@ -68,7 +68,7 @@ class AboutAppPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Developed by Fathimath Nishma\nFlutter Developer at Softronics',
+              'Developed by softroniics Team\nFlutter Developer at Softronics',
               style: TextStyle(fontSize: 16, height: 1.5),
             ),
             const SizedBox(height: 24),

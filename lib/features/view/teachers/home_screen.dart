@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                            CircleAvatar(
                             radius: 23,
-                            backgroundImage: AssetImage(AppImages.profile),
+                           backgroundImage:AssetImage(AppImages.Defaultprofile),
                           ),
                           const SizedBox(width: 10),
                           Text(
@@ -79,42 +79,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              onChanged: state.onTodaySearchChanged,
-                              decoration: InputDecoration(
-                                hintText: 'Search exams..',
-                                hintStyle: const TextStyle(fontSize: 12),
-                                prefixIcon:
-                                    const Icon(Icons.search, size: 19),
-                                filled: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(7),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 5,
-                                ),
-                                fillColor: Colors.white,
-                              ),
-                            ),
+                      TextFormField(
+                        onChanged: state.onTodaySearchChanged,
+                        decoration: InputDecoration(
+                          hintText: 'Search exams..',
+                          hintStyle: const TextStyle(fontSize: 12),
+                          prefixIcon:
+                              const Icon(Icons.search, size: 19),
+                          filled: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(7),
+                            borderSide: BorderSide.none,
                           ),
-                          const SizedBox(width: 6),
-                          Container(
-                            height: 46,
-                            width: MediaQuery.sizeOf(context).width * 0.12,
-                            decoration: BoxDecoration(
-                              color: AppColors.white,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(13.0),
-                              child: Image.asset(AppImages.filter_blue),
-                            ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 5,
                           ),
-                        ],
+                          fillColor: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -198,6 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         examCode: data.courseId,
                         time: data.startTime,
                         sem: data.sem,
+                        visibleMenu: false,
                       ),
                     ),
                   );

@@ -43,7 +43,7 @@ class AuthRepository {
     required String sem,
    
   }) async {
-    return await _authService.getStudentSeatDetails(
+    return await _authService.fetchSeatAndRoom(
       regNo: regNo,
       department: department,
       sem:sem ,

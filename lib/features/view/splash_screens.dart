@@ -1,5 +1,6 @@
 import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
 import 'package:bca_exam_managment/features/view/on_boarding/on_boarding1_sreen.dart';
+import 'package:bca_exam_managment/features/view/student/students_entry_Screen.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -34,30 +35,42 @@ WidgetsBinding.instance.addPostFrameCallback((_) async {
 
 }
 
-
-  Future<void> _initializeApp() async {
+Future<void> _initializeApp() async {
   final auth = Provider.of<AuthProvider>(context, listen: false);
 
   try {
     auth.setTodayDate();
 
-    // Fetch current user
-    final user = await auth.checkUserStatus();
+    // 🔍 Check User Status
+    final result = await auth.checkUserStatus();
 
     if (!mounted) return;
 
-    // Navigate based on user status
-    if (user != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AppRoot()),
-      );
-    } else {
+    if (result != null) {
+      final String userType = result["type"];
+
+      // 🔥 Redirect based on type
+      if (userType == "student") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const StudentsEntryScreen()),
+        );
+      } 
+      else if (userType == "teacher" || userType == "admin") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AppRoot()),
+        );
+      } 
+    } 
+    else {
+      // 🟦 No user → Go to OnBoarding
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const OnBoardingScreen()),
       );
     }
+
   } catch (e) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -66,8 +79,6 @@ WidgetsBinding.instance.addPostFrameCallback((_) async {
     }
   }
 }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +97,7 @@ WidgetsBinding.instance.addPostFrameCallback((_) async {
             height: 300,
           ),
               Text(
-                "Exam Arrangement",
+                "EduSeat",
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.bold,

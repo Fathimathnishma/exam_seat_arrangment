@@ -1,7 +1,9 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
+import 'package:bca_exam_managment/core/utils/app_images.dart';
 import 'package:bca_exam_managment/features/view/teachers/profile/profile_details.dart';
 import 'package:bca_exam_managment/features/view/teachers/profile/settings.dart';
 import 'package:bca_exam_managment/features/view/teachers/teacher_login.dart';
+import 'package:bca_exam_managment/features/view/user_type_screen.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -76,7 +78,7 @@ Future<void> showLogoutDialog(BuildContext context, {required VoidCallback onCon
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircleAvatar(backgroundColor: AppColors.grey, radius: 67),
+                    CircleAvatar( radius: 67,backgroundImage:AssetImage(AppImages.Defaultprofile),),
                     const SizedBox(height: 10),
                      Text(state.currentUser?.name??"", style: TextStyle(fontSize: 20)),
       
@@ -153,7 +155,7 @@ Future<void> showLogoutDialog(BuildContext context, {required VoidCallback onCon
                 Navigator.pop(context); // close loading
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => TeacherLoginScreen()),
+                  MaterialPageRoute(builder: (_) => UserTypeScreen()),
                 );
               },
             );

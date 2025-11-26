@@ -71,7 +71,7 @@ class AddExamScreens extends StatelessWidget {
                       TextFormField(
                         controller: state.examNameController,
                         decoration: InputDecoration(
-                          hintText: 'Course Name:',
+                          hintText: 'Exam Subject:',
                           border: blueBorder,
                           enabledBorder: blueBorder,
                           focusedBorder: blueBorder,
@@ -83,7 +83,7 @@ class AddExamScreens extends StatelessWidget {
                         validator:
                             (value) =>
                                 value == null || value.trim().isEmpty
-                                    ? 'Course name is required'
+                                    ? 'Exam Subject is required'
                                     : null,
                       ),
                       SizedBox(height: 12),
@@ -113,45 +113,81 @@ class AddExamScreens extends StatelessWidget {
          // Department & Semester
 Row(
   children: [
-    Expanded(
+    // ---------------------- DEPARTMENT --------------------------
+    Flexible( // 🔥 CHANGED: replaced Expanded → Flexible to avoid overflow
       child: DropdownButtonFormField<String>(
+        isDense: true,              // 🔥 CHANGED
+        isExpanded: true,           // 🔥 CHANGED
         decoration: InputDecoration(
           border: blueBorder,
           enabledBorder: blueBorder,
           focusedBorder: blueBorder,
-          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+          contentPadding: EdgeInsets.symmetric(
+            vertical: 6,            // 🔥 REDUCED PADDING
+            horizontal: 6,          // 🔥 REDUCED PADDING
+          ),
         ),
         value: state.selectedDepartment,
-        hint: Text('Department', style: TextStyle()),
-        items: state.departments
-            .map((dept) => DropdownMenuItem(value: dept, child: Text(dept)))
-            .toList(),
+        hint: Text(
+          'Department',
+          maxLines: 1,               // 🔥 ADDED
+          overflow: TextOverflow.ellipsis, // 🔥 ADDED
+        ),
+        items: state.departments.map((dept) {
+          return DropdownMenuItem(
+            value: dept,
+            child: Text(
+              dept,
+              maxLines: 1,           // 🔥 ADDED
+              overflow: TextOverflow.ellipsis, // 🔥 ADDED
+            ),
+          );
+        }).toList(),
         onChanged: state.setDepartment,
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Department required' : null,
       ),
     ),
+
     SizedBox(width: 10),
-    Expanded(
+
+    // ---------------------- SEMESTER ------------------------------
+    Flexible( // 🔥 CHANGED: replaced Expanded → Flexible
       child: DropdownButtonFormField<String>(
+        isDense: true,              // 🔥 CHANGED
+        isExpanded: true,           // 🔥 CHANGED
         decoration: InputDecoration(
           border: blueBorder,
           enabledBorder: blueBorder,
           focusedBorder: blueBorder,
-          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+          contentPadding: EdgeInsets.symmetric(
+            vertical: 6,            // 🔥 REDUCED PADDING
+            horizontal: 6,          // 🔥 REDUCED PADDING
+          ),
         ),
         value: state.selectedSem,
-        hint: Text('Semester',  ),
-        items: state.semesters
-            .map((sem) => DropdownMenuItem(value: sem, child: Text(sem)))
-            .toList(),
+        hint: Text(
+          'Semester',
+          maxLines: 1,               // 🔥 ADDED
+          overflow: TextOverflow.ellipsis, // 🔥 ADDED
+        ),
+        items: state.semesters.map((sem) {
+          return DropdownMenuItem(
+            value: sem,
+            child: Text(
+              sem,
+              maxLines: 1,           // 🔥 ADDED
+              overflow: TextOverflow.ellipsis, // 🔥 ADDED
+            ),
+          );
+        }).toList(),
         onChanged: state.setSemester,
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Semester required' : null,
       ),
     ),
   ],
 ),
+
+
+
+
 
 
                       SizedBox(height: 12),

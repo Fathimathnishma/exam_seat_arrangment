@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:bca_exam_managment/features/models/exam_model.dart';
 import 'package:bca_exam_managment/features/models/room_model.dart';
+import 'package:bca_exam_managment/features/models/student_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ExamService {
@@ -134,27 +135,98 @@ Future<List<ExamModel>> fetchExamsByIds(List<String> examIds) async {
   }
 
 
-  Future<void> deleteExamFromRoom(String roomId, String examId) async {
-    try {
-      log("2");
-      final roomRef = firestore.collection('Rooms').doc(roomId);
+  // Future<void> deleteExamFromRoom(String roomId, String examId) async {
+  //   try {
+  //     log("2");
+  //     final roomRef = firestore.collection('Rooms').doc(roomId);
 
-      await roomRef.update({
-        'exams': FieldValue.arrayRemove([examId])
-      });
-      log("🗑️ Removed examId from exams array");
+  //     await roomRef.update({
+  //       'exams': FieldValue.arrayRemove([examId])
+  //     });
+  //     log("🗑️ Removed examId from exams array");
 
-    // 🔹 Remove the exam entry (students) from 'membersInRoom'
-    await roomRef.update({
-      'membersInRoom.$examId': FieldValue.delete(),
-    });
-    log("✅ Removed members of exam $examId from room $roomId");
+  //   // 🔹 Remove the exam entry (students) from 'membersInRoom'
+  //   await roomRef.update({
+  //     'membersInRoom.$examId': FieldValue.delete(),
+  //   });
+  //   log("✅ Removed members of exam $examId from room $roomId");
 
-      log("3");
-    } catch (e) {
-      throw Exception('Failed to delete exam from room: $e');
+  //     log("3");
+  //   } catch (e) {
+  //     throw Exception('Failed to delete exam from room: $e');
+  //   }
+  // }
+Future<void> deleteExamFromRoom({
+  required String roomId,
+  required ExamModel exam,
+}) async {
+  try {
+    log("🗑 Starting deleteExamFromRoom...");
+
+    final roomRef = firestore.collection('Rooms').doc(roomId);
+    final examRef = firestore.collection('exams').doc(exam.examId);
+
+    // 1️⃣ Load ROOM first
+    final roomSnap = await roomRef.get();
+    if (!roomSnap.exists) {
+      log("❌ Room not found");
+      return;
     }
+
+    final roomData = roomSnap.data()!;
+    final RoomModel room = RoomModel.fromMap(roomData);
+
+    // 2️⃣ Extract students assigned in THIS room for THIS exam
+    final removedStudents =
+        room.membersInRoom[exam.examId] ?? []; // List<StudentsModel>
+
+    log("🧍 Students to restore: ${removedStudents.map((s) => s.regNo).toList()}");
+
+    // 3️⃣ Restore these students back into exam.duplicateStudents
+    final updatedDuplicateList = [
+      ...exam.duplicatestudents ?? [],
+      ...removedStudents
+    ];
+
+    // 4️⃣ Remove allSeats entries that belong to this exam
+    final updatedSeats =
+        room.allSeats?.where((seat) => seat["exam"] != exam.examId).toList() ?? [];
+
+    // 5️⃣ Remove exam entry from the room model
+    final updatedMembers = Map<String, List<StudentsModel>>.from(room.membersInRoom);
+    updatedMembers.remove(exam.examId);
+
+    final updatedExams = List<String>.from(room.exams);
+    updatedExams.remove(exam.examId);
+
+    // 6️⃣ Create updated ROOM model
+    final updatedRoom = room.copyWith(
+      exams: updatedExams,
+      membersInRoom: updatedMembers,
+      allSeats: updatedSeats,
+    );
+
+    // 7️⃣ Update Firestore using a batch
+    final batch = firestore.batch();
+
+    batch.update(roomRef, updatedRoom.toMap());
+
+    batch.update(
+      examRef,
+      {
+        "duplicatestudents": updatedDuplicateList.map((e) => e.toMap()).toList(),
+      },
+    );
+
+    await batch.commit();
+
+    log("✅ Exam removed from room & students restored successfully.");
+
+  } catch (e) {
+    log("❌ Error deleting exam from room: $e");
+    throw Exception("Failed to delete exam from room: $e");
   }
+}
 
 
 

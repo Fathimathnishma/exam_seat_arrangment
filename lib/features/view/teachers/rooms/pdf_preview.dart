@@ -30,7 +30,7 @@ class RoomPdfScreen extends StatelessWidget {
         canChangePageFormat: false,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _downloadPdf,
+        onPressed: () => _downloadPdf(context),
         child: const Icon(Icons.download),
       ),
     );
@@ -94,7 +94,7 @@ class RoomPdfScreen extends StatelessWidget {
 
                   return pw.TableRow(
                     children: [
-                      _cell((i + 1).toString()), // Auto seat number
+                      _cell((i + 1).toString()),
                       _cell(student?.regNo ?? "-"),
                       _cell(student?.name ?? "-"),
                       _cell(student?.department ?? "-"),
@@ -113,20 +113,48 @@ class RoomPdfScreen extends StatelessWidget {
   }
 
   // ---------------------------------------------------------
-  // DOWNLOAD PDF
+  // DOWNLOAD PDF (ANDROID FIX)
   // ---------------------------------------------------------
-  Future<void> _downloadPdf() async {
-    if (await Permission.storage.request().isDenied) {
+  Future<void> _downloadPdf(BuildContext context) async {
+    // Ask for permission
+    final status = await Permission.storage.request();
+    if (!status.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Storage permission denied")),
+      );
       return;
     }
 
+    // generate PDF bytes
     final bytes = await _generatePdf();
-    final directory = await getDownloadsDirectory();
 
-    final file = File("${directory!.path}/Room_${room.roomNo}.pdf");
+    Directory? directory;
+
+    if (Platform.isAndroid) {
+      // Write to the real Downloads folder
+      directory = Directory("/storage/emulated/0/Download");
+
+      // if folder doesn't exist, fallback
+      if (!await directory.exists()) {
+        directory = await getExternalStorageDirectory();
+      }
+    } else {
+      directory = await getDownloadsDirectory();
+    }
+
+    final filePath = "${directory!.path}/Room_${room.roomNo}.pdf";
+    final file = File(filePath);
+
     await file.writeAsBytes(bytes);
 
-    debugPrint("PDF Saved at: ${file.path}");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("PDF saved to Downloads folder:\n$filePath"),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    debugPrint("📄 PDF saved at: $filePath");
   }
 
   // ---------------------------------------------------------

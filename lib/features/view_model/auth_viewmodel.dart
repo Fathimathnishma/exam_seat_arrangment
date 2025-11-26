@@ -3,8 +3,10 @@ import 'package:bca_exam_managment/core/widgets/custom_fluttertoast.dart';
 import 'package:bca_exam_managment/features/models/student_model.dart';
 import 'package:bca_exam_managment/features/models/user_model.dart';
 import 'package:bca_exam_managment/features/repo/auth_repo.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepo;
@@ -28,26 +30,70 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// 🔹 Check if user is already logged in
-  Future<UserModel?> checkUserStatus() async {
-    try {
-      isLoading = true;
-      notifyListeners();
+Future<Map<String, dynamic>?> checkUserStatus() async {
+  try {
+    isLoading = true;
+    notifyListeners();
 
-      currentUser = await _authRepo.fetchCurrentUser();
+    final prefs = await SharedPreferences.getInstance();
 
-      if (currentUser != null) {
-        log("👤 Current user fetched: ${currentUser!.email}");
+    /// -----------------------------------------------------
+    /// 🔥 1. CHECK STUDENT SESSION (SharedPreferences)
+    /// -----------------------------------------------------
+    final isStudentLoggedIn = prefs.getBool("isStudentLoggedIn") ?? false;
+
+    if (isStudentLoggedIn) {
+      final regNo = prefs.getString("studentId");
+      final name = prefs.getString("studentName");
+      final department = prefs.getString("department");
+      final sem = prefs.getString("sem");
+
+      if (regNo != null && name != null && department != null && sem != null) {
+        currentStudentUser = StudentsModel(
+          regNo: regNo,
+          name: name,
+          department: department,
+          sem: sem,
+          createdAt: Timestamp.now(),
+        );
+
+        log("🎓 Student logged in: $name");
+
+        return {
+          "type": "student",
+          "data": currentStudentUser,
+        };
       }
-
-      return currentUser;
-    } catch (e) {
-      showCustomToast(message: 'Failed to check user status: $e', isError: true);
-      return null;
-    } finally {
-      isLoading = false;
-      notifyListeners();
     }
+
+    /// -----------------------------------------------------
+    /// 🔥 2. CHECK FIREBASE USER (ADMIN / TEACHER)
+    /// -----------------------------------------------------
+    currentUser = await _authRepo.fetchCurrentUser();
+
+    if (currentUser != null) {
+      log("👤 Firebase user logged in: ${currentUser!.email}");
+
+      return {
+        "type": currentUser!.role,   // <-- role comes from UserModel
+        "data": currentUser,
+      };
+    }
+
+    /// -----------------------------------------------------
+    /// ❌ 3. NO USER FOUND
+    /// -----------------------------------------------------
+    return null;
+
+  } catch (e) {
+    showCustomToast(message: "Failed to check login status: $e", isError: true);
+    return null;
+  } finally {
+    isLoading = false;
+    notifyListeners();
   }
+}
+
 
   Future<void> fetchusers() async {
     try {
@@ -110,78 +156,95 @@ class AuthProvider extends ChangeNotifier {
   /// 🚀 **ADDED: STUDENT SIGNUP**
   /// ================================================================
   Future<void> studentSignUp({
-    required String name,
-    required String studentId,
-    required String password,
-    required String department,
-    required String sem
-  }) async {
-    try {
-      isLoading = true;
-      notifyListeners();
+  required String name,
+  required String studentId,
+  required String password,
+  required String department,
+  required String sem,
+}) async {
+  try {
+    isLoading = true;
+    notifyListeners();
 
-     final result = await _authRepo.studentSignUp(
-  name: name,
-  studentId: studentId,
-  password: password,
-  department: department,   // <-- NEW
-  sem: sem,                 // <-- NEW
-);
+    final result = await _authRepo.studentSignUp(
+      name: name,
+      studentId: studentId,
+      password: password,
+      department: department,
+      sem: sem,
+    );
 
+    if (result != null) {
+      currentStudentUser = StudentsModel(
+        sem: result["sem"],
+        department: result["department"],
+        regNo: result["regNo"],
+        name: result["name"],
+        createdAt: result["createdAt"],
+      );
 
-     if (result != null) {
-        currentStudentUser = StudentsModel(
-          sem:result["sem"] ,
-          department: result["department"],
-          regNo: result["regNo"],
-          name: result["name"],
-           createdAt: result["createdAt"],
-        );
+      /// 🔥 SAVE STUDENT SESSION IN SHARED PREFERENCES
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool("isStudentLoggedIn", true);
+      await prefs.setString("studentId", result["regNo"]);
+      await prefs.setString("studentName", result["name"]);
+      await prefs.setString("department", result["department"]);
+      await prefs.setString("sem", result["sem"]);
 
-        showCustomToast(message: "Student registered successfully!");
-      }
-    } catch (e) {
-      showCustomToast(message: "Signup failed: $e", isError: true);
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      showCustomToast(message: "Student registered successfully!");
     }
+  } catch (e) {
+    showCustomToast(message: "Signup failed: $e", isError: true);
+  } finally {
+    isLoading = false;
+    notifyListeners();
   }
+}
+
 
   /// ================================================================
   /// 🚀 **ADDED: STUDENT LOGIN**
   /// ================================================================
   Future<void> studentLogin({
-    required String studentId,
-    required String password,
-  }) async {
-    try {
-      isLoading = true;
-      notifyListeners();
+  required String studentId,
+  required String password,
+}) async {
+  try {
+    isLoading = true;
+    notifyListeners();
 
-      final result = await _authRepo.studentLogin(
-        studentId: studentId,
-        password: password,
+    final result = await _authRepo.studentLogin(
+      studentId: studentId,
+      password: password,
+    );
+
+    if (result != null) {
+      currentStudentUser = StudentsModel(
+        sem: result["sem"],
+        department: result["department"],
+        regNo: result["regNo"],
+        name: result["name"],
+        createdAt: result["createdAt"],
       );
 
-      if (result != null) {
-        currentStudentUser = StudentsModel(
-          sem:result["sem"] ,
-          department: result["department"],
-          regNo: result["regNo"],
-          name: result["name"],
-           createdAt: result["createdAt"],
-        );
+      /// 🔥 SAVE STUDENT SESSION IN SHARED PREFERENCES
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool("isStudentLoggedIn", true);
+      await prefs.setString("studentId", result["regNo"]);
+      await prefs.setString("studentName", result["name"]);
+      await prefs.setString("department", result["department"]);
+      await prefs.setString("sem", result["sem"]);
 
-        showCustomToast(message: "Student login successful!");
-      }
-    } catch (e) {
-      showCustomToast(message: "Student login failed: $e", isError: true);
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      showCustomToast(message: "Student login successful!");
     }
+  } catch (e) {
+    showCustomToast(message: "Student login failed: $e", isError: true);
+  } finally {
+    isLoading = false;
+    notifyListeners();
   }
+}
+
 
   /// 🔹 Admin Login
   Future<void> login(String email, String password) async {
@@ -210,7 +273,6 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authRepo.logout();
       currentUser = null;
-      currentStudentUser = null;
 
       showCustomToast(message: 'Logged out successfully!');
 
@@ -249,34 +311,96 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 🔹 Fetch Seat Details
-  Future<void> fetchSeatDetails({
-    required String regNo,
-    required String department,
-    required String sem,
-  }) async {
-    try {
-      isLoading = true;
-      notifyListeners();
 
-      seatDetails = await _authRepo.fetchSeatAndRoom(
-        regNo: regNo,
-        department: department,
-        sem: sem,
-      );
+/// 🔹 Student Logout (without clearing SharedPreferences)
+Future<void> studentLogout({VoidCallback? onSuccess}) async {
+  try {
+    // Clear only the in-memory user
+    currentStudentUser = null;
 
-      if (seatDetails != null && seatDetails!.isNotEmpty) {
-        showCustomToast(message: 'Seat details loaded!');
-      } else {
+    showCustomToast(message: 'Student logged out successfully!');
 
-        log("not found");
-        showCustomToast(message: 'No seat details found.', isError: true);
-      }
-    } catch (e) {
-      showCustomToast(message: 'Error fetching seat details: $e', isError: true);
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+    if (onSuccess != null) onSuccess();
+  } catch (e) {
+    showCustomToast(message: 'Failed to logout student: $e', isError: true);
+  } finally {
+    notifyListeners();
   }
+}
+
+Future<void> deleteStudentAccount({VoidCallback? onSuccess}) async {
+  try {
+    if (currentStudentUser == null) return;
+
+    await _authRepo.deleteUserAccount(currentStudentUser!.regNo);
+
+    // Clear local session
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("isStudentLoggedIn");
+    await prefs.remove("studentId");
+    await prefs.remove("studentName");
+    await prefs.remove("department");
+    await prefs.remove("sem");
+
+    currentStudentUser = null;
+
+    showCustomToast(message: 'Student account deleted successfully!');
+
+    if (onSuccess != null) onSuccess();
+  } catch (e) {
+    showCustomToast(message: 'Failed to delete student account: $e', isError: true);
+  } finally {
+    notifyListeners();
+  }
+}
+  /// 🔹 Fetch Seat Details
+Future<void> fetchSeatDetails({
+  required String regNo,
+  required String department,
+  required String sem,
+}) async {
+  isLoading = true;
+  notifyListeners();
+
+  try {
+    final cleanRegNo = regNo.trim();
+    final cleanDept = department.trim();
+    final cleanSem = sem.trim();
+
+    seatDetails = await _authRepo.fetchSeatAndRoom(
+      regNo: cleanRegNo,
+      department: cleanDept,
+      sem: cleanSem,
+    );
+
+    // -----------------------------------------
+    // If no seat found → Show message & return
+    // -----------------------------------------
+    if (seatDetails == null) {
+      showCustomToast(
+        message: "Seat not found for this student",
+        isError: true,
+      );
+      return;
+    }
+
+    // -----------------------------------------
+    // SUCCESS
+    // -----------------------------------------
+    showCustomToast(message: "Seat details loaded!");
+    log("Seat details loaded!"); 
+
+  } catch (e) {
+    log("SEAT FETCH ERROR: $e");
+    showCustomToast(message: "Error fetching seat details", isError: true);
+  } finally {
+    isLoading = false;
+    notifyListeners();
+  }
+}
+
+
+
+
+
 }

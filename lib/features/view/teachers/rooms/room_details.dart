@@ -157,7 +157,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         onDelete: () {
                           examState.deleteExamFromRoom(() {
                             roomState.fetchRooms();
-                          },room.id!, exam.examId!);
+                          },room.id!, exam);
                           Navigator.pop(context);
                         },
                       );
@@ -446,7 +446,9 @@ Widget _buildGrid(
             children: [
               CircleAvatar(backgroundColor: color, radius: 9),
               const SizedBox(width: 10),
-              Text(exam, style: const TextStyle(fontSize: 14)),
+              Text(exam, style: const TextStyle(fontSize: 14),overflow: TextOverflow.ellipsis,
+maxLines: 1,
+),
             ],
           ),
           Text("Students: $studentsNo"),

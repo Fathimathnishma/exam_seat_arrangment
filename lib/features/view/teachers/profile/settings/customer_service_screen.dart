@@ -18,7 +18,7 @@ class CustomerServiceScreen extends StatelessWidget {
     final Uri _phone = Uri.parse("tel:+919876543210");
     final Uri _email = Uri(
     scheme: 'mailto',
-    path: 'example@email.com',
+    path: '@email.com',
     query: 'subject=Greetings&body=Hello, this is from Flutter app',
   );
   final Uri _whatsapp = Uri.parse("https://wa.me/919876543210?text=Hello%20Support");

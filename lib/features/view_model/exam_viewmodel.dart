@@ -370,27 +370,27 @@ void filterExams() {
   clearData();
 }
 
-void deleteExamFromRoom(void Function() onSuccess, String roomId, String examId) async {
+void deleteExamFromRoom(void Function() onSuccess, String roomId, ExamModel exam) async {
   isLoading = true;
   notifyListeners();
 
   try {
-    log("Deleting exam from room: $roomId, $examId");
+    log("Deleting exam from room: $roomId, ${exam.examId}");
 
     // Call the repository function
-    await _examRepo.deleteExamFromRoom(roomId, examId);
+    await _examRepo.deleteExamFromRoom(roomId, exam);
 
     // Update roomofExams list
     final roomIndex = roomofExams.indexWhere((r) => r.id == roomId);
     if (roomIndex != -1) {
       // Remove by matching string representation (defensive)
       roomofExams[roomIndex].exams =
-          roomofExams[roomIndex].exams.where((e) => e.toString() != examId).toList();
+          roomofExams[roomIndex].exams.where((e) => e.toString() != exam.examId).toList();
     }
 
     // Update examinRoom list
     examinRoom = examinRoom
-        .where((exam) => exam.examId != examId)
+        .where((exam) => exam.examId != exam.examId)
         .toList();
   onSuccess();
   } catch (e) {

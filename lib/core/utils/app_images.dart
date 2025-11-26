@@ -13,6 +13,7 @@ class AppImages {
   static String profileActive = "assets/images/active_profile.png";
 
   static String student = "assets/images/student.png";
+  static String Defaultprofile= "assets/images/Default-Profile.png";
   static String teacher = "assets/images/teacher.png";
   static String filter_blue = "assets/images/filter_blue.png";
   static String filter = "assets/images/filter.png";

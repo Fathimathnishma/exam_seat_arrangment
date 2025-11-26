@@ -6,6 +6,7 @@ import 'package:bca_exam_managment/features/service/exam_services.dart';
 import 'package:bca_exam_managment/features/service/room_services.dart';
 import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
 import 'package:bca_exam_managment/features/view/splash_screens.dart';
+import 'package:bca_exam_managment/features/view/student/students_profile.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:bca_exam_managment/features/view_model/exam_viewmodel.dart';
 import 'package:bca_exam_managment/features/view_model/home_viewmodel.dart';
@@ -13,11 +14,16 @@ import 'package:bca_exam_managment/features/view_model/room_viewodel.dart';
 import 'package:bca_exam_managment/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,    // Allow only portrait mode
+    DeviceOrientation.portraitDown,
+  ]);
 
   runApp(const MyApp());
 }
@@ -43,7 +49,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
        // home: AppRoot(),
-         home: SplashScreens(),
+         home: Stdprofile(),
       ),
     );
   }

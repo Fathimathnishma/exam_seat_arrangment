@@ -5,6 +5,7 @@ import 'package:bca_exam_managment/features/view/student/students_entry_Screen.d
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:bca_exam_managment/features/view_model/exam_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class StudentAuthScreen extends StatefulWidget {
@@ -86,18 +87,24 @@ class _StudentAuthScreenState extends State<StudentAuthScreen> {
                   // Student ID
                   const Text("Student ID:", style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 5),
-                  TextFormField(
-                    controller: studentIdController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your student ID or reg no',
-                      hintStyle: const TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                      border: blueBorder,
-                      enabledBorder: blueBorder,
-                      focusedBorder: blueBorder,
-                    ),
-                    keyboardType: TextInputType.text,
-                  ),
+              TextFormField(
+  controller: studentIdController,
+
+  // ⭐ This makes the keyboard show CAPITAL letters
+  textCapitalization: TextCapitalization.characters,
+
+  decoration: InputDecoration(
+    hintText: 'Enter your student ID or reg no',
+    hintStyle: TextStyle(color: Color(0xFF8B8B8B), fontSize: 14),
+    contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+    border: blueBorder,
+    enabledBorder: blueBorder,
+    focusedBorder: blueBorder,
+  ),
+
+  keyboardType: TextInputType.text,
+),
+
                   const SizedBox(height: 20),
 
                   // Password

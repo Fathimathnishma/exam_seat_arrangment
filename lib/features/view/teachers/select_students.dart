@@ -145,15 +145,18 @@ class _SelectExamDemoState extends State<SelectExamDemo> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Total Students In Selected Exam: ${selectedExam!.students.length}",
+                          "Total Students In Exam: ${selectedExam!.students.length}",
                         ),
                         const SizedBox(height: 4),
+                         Text("Available students in exam: ${selectedExam!.students.length - allmembers}"),
                         if (room != null) ...[
                           Text("Room Capacity: ${room.capacity}"),
                           Text("Members in Room: $allmembers"),
                           Text(
                             "Available Seats: ${room.capacity - allmembers}",
                           ),
+                         
+
                           const SizedBox(height: 6),
                           Builder(
                             builder: (_) {
