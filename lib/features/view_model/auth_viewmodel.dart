@@ -29,6 +29,13 @@ class AuthProvider extends ChangeNotifier {
     debugPrint("Today's Date (from provider): $_todayDate");
   }
 
+  Future<void> clearAllPreferences() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();
+  log("🧹 All SharedPreferences cleared. Starting fresh!");
+}
+
+
   /// 🔹 Check if user is already logged in
 Future<Map<String, dynamic>?> checkUserStatus() async {
   try {
@@ -93,7 +100,6 @@ Future<Map<String, dynamic>?> checkUserStatus() async {
     notifyListeners();
   }
 }
-
 
   Future<void> fetchusers() async {
     try {

@@ -30,8 +30,8 @@ Future <List<ExamModel>> fetchExamsByIds(List<String> examId) async {
   return _examService.fetchExamsByIds(examId);
   }
   /// Delete room
-  Future<void> deleteExam(String examId) {
-    return _examService.deleteExam(examId);
+  Future<bool> deleteExam(ExamModel exam) {
+    return _examService.deleteExam(exam);
   }
    Future<void> deleteExamFromRoom(String roomId,ExamModel exam) {
     return _examService.deleteExamFromRoom(  roomId: roomId, exam:exam  );

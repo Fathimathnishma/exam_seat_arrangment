@@ -85,105 +85,72 @@ class RoomService {
   // ---------------------------------------------------------------------------
   // DELETE ROOM
   // ---------------------------------------------------------------------------
-  Future<void> deleteRoom(String roomId) async {
-    try {
-      await firebase.doc(roomId).delete();
-      log("Room deleted successfully: $roomId");
-    } catch (e) {
-      log("Error while deleting room: $e");
+ Future<bool> deleteRoom(String roomId) async {
+  try {
+    final roomDoc = await firebase.doc(roomId).get();
+
+    if (!roomDoc.exists) {
+      log("⚠️ Room not found: $roomId");
+      return false;
     }
+
+    final data = roomDoc.data() as Map<String, dynamic>;
+    final exams = List<String>.from(data['exams'] ?? []);
+
+    // ------------------------------------------------------
+    // 🔍 CHECK FOR UPCOMING EXAMS
+    // ------------------------------------------------------
+    for (String examId in exams) {
+      final examSnap = await FirebaseFirestore.instance
+          .collection("exams")
+          .doc(examId)
+          .get();
+
+      if (!examSnap.exists) continue;
+
+      final examData = examSnap.data()!;
+      final examDate = (examData['date'] as Timestamp).toDate();
+      final examTime = examData['startTime']; // "09:30 AM"
+
+      // Parse startTime
+      final parts = examTime.split(" ");
+      final hm = parts[0].split(":");
+      int hour = int.parse(hm[0]);
+      final minute = int.parse(hm[1]);
+      final ampm = parts[1];
+
+      if (ampm == "PM" && hour != 12) hour += 12;
+      if (ampm == "AM" && hour == 12) hour = 0;
+
+      final examDateTime = DateTime(
+        examDate.year,
+        examDate.month,
+        examDate.day,
+        hour,
+        minute,
+      );
+
+      // ⛔ BLOCK DELETE IF FUTURE EXAM DETECTED
+      if (examDateTime.isAfter(DateTime.now())) {
+        log("❌ Cannot delete. Upcoming exam found: $examId");
+        return false;
+      }
+    }
+
+    // ------------------------------------------------------
+    // ✅ SAFE TO DELETE
+    // ------------------------------------------------------
+    await firebase.doc(roomId).delete();
+    log("🗑️ Room deleted successfully: $roomId");
+    return true;
+
+  } catch (e) {
+    log("🔥 Error deleting room: $e");
+    return false;
   }
+}
 
-  // ---------------------------------------------------------------------------
-  // ASSIGN STUDENTS TO ROOM
-  // ---------------------------------------------------------------------------
-//   Future<void> assignStudentsToRoom({
-//   required ExamModel exam,
-//   required String roomId,
-//   required int count,
-// }) async {
-//   try {
-//     log("=== SERVICE assignStudentsToRoom START ===");
 
-//     // 1. Get duplicate students
-//     final dupStudents = exam.duplicatestudents ?? [];
-//     log("Duplicate students: ${dupStudents.map((s) => s.regNo).toList()}");
-
-//     if (dupStudents.isEmpty || count <= 0) {
-//       log("❌ No duplicates or invalid count");
-//       return;
-//     }
-
-//     // 2. Fetch room
-//     final roomSnap = await firebase.doc(roomId).get();
-//     if (!roomSnap.exists) {
-//       log("❌ Room not found: $roomId");
-//       return;
-//     }
-
-//     final roomData = roomSnap.data()!;
-//     roomData["id"] = roomSnap.id;
-//     final room = RoomModel.fromMap(roomData);
-
-//     final members = room.membersInRoom;
-//     final existingList = members[exam.examId] ?? [];
-
-//     // 3. Remove already assigned
-//     final cleanDuplicateList = dupStudents.where((s) =>
-//         !existingList.any((m) => m.regNo == s.regNo)).toList();
-
-//     if (cleanDuplicateList.isEmpty) {
-//       log("⚠ All duplicate students are already assigned.");
-//       return;
-//     }
-
-//     // 4. Apply safe count (cannot exceed list)
-//     final safeCount =
-//         count > cleanDuplicateList.length ? cleanDuplicateList.length : count;
-
-//     final selected = cleanDuplicateList.take(safeCount).toList();
-//     final remaining = cleanDuplicateList.skip(safeCount).toList();
-
-//     log("Selected for assignment: ${selected.map((s) => s.regNo).toList()}");
-//     log("Remaining after assignment: ${remaining.map((s) => s.regNo).toList()}");
-
-//     // 5. Add selected students to room
-//     existingList.addAll(selected);
-
-//     // Deduplicate again (safety)
-//     final updatedList = {
-//       for (var s in existingList) s.regNo: s,
-//     }.values.toList();
-
-//     members[exam.examId!] = updatedList;
-
-//     log("Final list in room: ${updatedList.map((s) => s.regNo).toList()}");
-
-//     // 6. Commit updates to Firebase
-//     final batch = firestore.batch();
-
-//     batch.update(firebase.doc(roomId), {
-//       "membersInRoom": members.map(
-//         (key, value) => MapEntry(
-//           key,
-//           value.map((s) => s.toMap()).toList(),
-//         ),
-//       ),
-//     });
-
-//     batch.update(examCollection.doc(exam.examId), {
-//       "duplicatestudents": remaining.map((s) => s.toMap()).toList(),
-//     });
-
-//     await batch.commit();
-
-//     log("SERVICE: Students assigned successfully!");
-//     log("=== SERVICE assignStudentsToRoom END ===");
-
-//   } catch (e) {
-//     log("❌ ERROR in SERVICE assignStudentsToRoom: $e");
-//   }
-// }
 
 
   // ---------------------------------------------------------------------------

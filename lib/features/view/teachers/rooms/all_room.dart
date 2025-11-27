@@ -1,5 +1,6 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/core/utils/app_images.dart';
+import 'package:bca_exam_managment/core/widgets/custom_fluttertoast.dart';
 import 'package:bca_exam_managment/features/view/teachers/rooms/add_rooms.dart';
 import 'package:bca_exam_managment/features/view/teachers/rooms/room_details.dart';
 import 'package:bca_exam_managment/features/view/teachers/widget/main_frame.dart';
@@ -72,35 +73,38 @@ class _AllRoomScreensState extends State<AllRoomScreens> {
                             borderRadius: BorderRadius.circular(7),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 5),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 5,
+                          ),
                           fillColor: AppColors.primary,
                         ),
                       ),
                     ),
                     const SizedBox(width: 3),
-                   Container(
-      height: 46,
-      width: MediaQuery.sizeOf(context).width * 0.12,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: InkWell(
-        onTap: () {
-          showModalBottomSheet(
-            context: context,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            builder: (context) => buildBlockFilterSheet(state),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(13.0),
-          child: Image.asset(AppImages.filter),
-        ),
-      ),
+                    Container(
+                      height: 46,
+                      width: MediaQuery.sizeOf(context).width * 0.12,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(16),
+                              ),
+                            ),
+                            builder: (context) => buildBlockFilterSheet(state),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(13.0),
+                          child: Image.asset(AppImages.filter),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -108,116 +112,126 @@ class _AllRoomScreensState extends State<AllRoomScreens> {
 
               // ✅ Room list or empty state
               Expanded(
-                child: state.filteredRooms.isEmpty
-                    ? Center(
-                        child: Text(
-                          state.searchText.isNotEmpty
-                              ? "No matching rooms found"
-                              : "No Room available...",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        itemCount: state.filteredRooms.length,
-                        itemBuilder: (context, index) {
-                          final data = state.filteredRooms[index];
-                          return InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      RoomDetailScreen(roomModel: data),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: RoomFrame(
-                                roomName: data.roomName!,
-                                roomNo: data.roomNo,
-                                capacity: data.capacity.toString(),
-                                layout: data.layout!,
-                                onUpdate: () {
-                                  state.setRoomForUpdate(data);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          AddRoomsScreen(room: data),
-                                    ),
-                                  );
-                                },
-                                onDelete: () => state.deleteRoom(data.id!),
-                              ),
+                child:
+                    state.filteredRooms.isEmpty
+                        ? Center(
+                          child: Text(
+                            state.searchText.isNotEmpty
+                                ? "No matching rooms found"
+                                : "No Room available...",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
                             ),
-                          );
-                        },
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 5),
-                      ),
+                          ),
+                        )
+                        : ListView.separated(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          itemCount: state.filteredRooms.length,
+                          itemBuilder: (context, index) {
+                            final data = state.filteredRooms[index];
+                            return InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            RoomDetailScreen(roomModel: data),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: RoomFrame(
+                                  roomName: data.roomName!,
+                                  roomNo: data.roomNo,
+                                  capacity: data.capacity.toString(),
+                                  layout: data.layout!,
+                                  onUpdate: () {
+                                    state.setRoomForUpdate(data);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) =>
+                                                AddRoomsScreen(room: data),
+                                      ),
+                                    );
+                                  },
+                                  onDelete: () async {
+                                    final success =await state.deleteRoom(data.id!);
+                                    if (!success) {
+                                      showCustomToast(
+                                        message: "First delete the exams in room",
+                                        isError: true,
+                                      );
+
+                                      return;
+                                    }
+                                    showCustomToast(
+                                      message: "Room deleted successfully!",
+                                      isError: false,
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          separatorBuilder:
+                              (context, index) => const SizedBox(height: 5),
+                        ),
               ),
             ],
           );
         },
       ),
     );
-
-
-    
   }
-Widget buildBlockFilterSheet(RoomProvider provider) {
-  return Container(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Filter by Block",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        SizedBox(height: 16),
 
-        // 🔘 Checkbox List
-        ...provider.blockList.map((block) {
-          return CheckboxListTile(
-            title: Text(block),
-            value: provider.selectedBlock == block,
-            activeColor: AppColors.primary,
-            onChanged: (checked) {
-              provider.selectedBlock = checked == true ? block : null;
-              provider.filterExams();
-              Navigator.pop(context); // close sheet after selecting
-            },
-          );
-        }).toList(),
+  Widget buildBlockFilterSheet(RoomProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Filter by Block",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: 16),
 
-        SizedBox(height: 10),
+          // 🔘 Checkbox List
+          ...provider.blockList.map((block) {
+            return CheckboxListTile(
+              title: Text(block),
+              value: provider.selectedBlock == block,
+              activeColor: AppColors.primary,
+              onChanged: (checked) {
+                provider.selectedBlock = checked == true ? block : null;
+                provider.filterExams();
+                Navigator.pop(context); // close sheet after selecting
+              },
+            );
+          }).toList(),
 
-        // ❌ Clear Filter
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {
-              provider.selectedBlock = null;
-              provider.filterExams();
-              Navigator.pop(context);
-            },
-            child: Text(
-              "Clear Filter",
-              style: TextStyle(color: Colors.red),
+          SizedBox(height: 10),
+
+          // ❌ Clear Filter
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                provider.selectedBlock = null;
+                provider.filterExams();
+                Navigator.pop(context);
+              },
+              child: Text("Clear Filter", style: TextStyle(color: Colors.red)),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-  
+        ],
+      ),
+    );
+  }
 }

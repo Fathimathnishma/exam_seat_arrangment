@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:bca_exam_managment/core/widgets/custom_fluttertoast.dart';
 import 'package:bca_exam_managment/features/models/exam_model.dart';
 import 'package:bca_exam_managment/features/models/room_model.dart';
 import 'package:bca_exam_managment/features/models/student_model.dart';
@@ -403,23 +404,26 @@ void deleteExamFromRoom(void Function() onSuccess, String roomId, ExamModel exam
 }
 
   /// Delete exam
-  Future<void> deleteExam(String examId) async {
-    isLoading = true;
-    notifyListeners();
-
+  Future<void> deleteExam(ExamModel exam) async {
     try {
-      await _examRepo.deleteExam(examId);
-      allExams.removeWhere((exam) => exam.examId == examId);
-     filterExams();
+      isLoading = true;
+      notifyListeners();
 
+      final success = await _examRepo.deleteExam(exam);
+
+      if (success) {
+        showCustomToast(message: "Exam deleted and rooms updated successfully!");
+      } else {
+        showCustomToast(message: "Failed to delete exam", isError: true);
+      }
     } catch (e) {
-      errorMessage = e.toString();
+      showCustomToast(message: "Error: $e", isError: true);
+    } finally {
+      isLoading = false;
       notifyListeners();
     }
-
-    isLoading = false;
-    notifyListeners();
   }
+  
   // Date
 DateTime? selectedExamDate;
 DateTimeRange? selectedRange;

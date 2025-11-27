@@ -38,7 +38,7 @@ class RoomRepository {
   }
 
   /// Delete room
-  Future<void> deleteRoom(String roomId) {
+  Future<bool> deleteRoom(String roomId) {
     return _roomService.deleteRoom(roomId);
   }
  

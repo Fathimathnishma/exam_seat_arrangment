@@ -1,3 +1,4 @@
+
 import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
 import 'package:bca_exam_managment/features/view/on_boarding/on_boarding1_sreen.dart';
 import 'package:bca_exam_managment/features/view/student/students_entry_Screen.dart';
@@ -56,7 +57,7 @@ Future<void> _initializeApp() async {
           MaterialPageRoute(builder: (_) => const StudentsEntryScreen()),
         );
       } 
-      else if (userType == "teacher" || userType == "admin") {
+      else if (userType == "Teacher" || userType == "Admin") {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const AppRoot()),

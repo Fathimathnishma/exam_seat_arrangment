@@ -321,15 +321,17 @@ Future<Map<String, dynamic>> checkRoomAvailability({
 
 
 
-  void deleteRoom(String roomId) async {
-    try {
-      await _roomRepo.deleteRoom(roomId);
-      await fetchRooms();
-    } catch (e) {
-      errorMessage = e.toString();
-      notifyListeners();
-    }
+ Future<bool> deleteRoom(String roomId) async {
+  final result = await _roomRepo.deleteRoom(roomId);
+
+  if (result) {
+    await fetchRooms();
+    return true;
+  } else {
+    return false; // upcoming exam exists OR error
   }
+}
+
 
  
 

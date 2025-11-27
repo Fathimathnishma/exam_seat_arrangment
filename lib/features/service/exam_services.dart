@@ -45,14 +45,72 @@ class ExamService {
   }
 
   /// Delete an exam by ID
-  Future<void> deleteExam(String examId) async {
+  Future<bool> deleteExam(ExamModel exam) async {
     try {
-      await firebase.doc(examId).delete();
-      log("🗑️ Exam deleted successfully with ID: $examId");
+      final examRef = firebase.doc(exam.examId);
+
+      // 1️⃣ Find all rooms containing this exam
+      final roomsQuery = await firestore
+          .collection('Rooms')
+          .where('exams', arrayContains: exam.examId)
+          .get();
+
+      final batch = firestore.batch();
+
+      for (final roomDoc in roomsQuery.docs) {
+        final roomRef = roomDoc.reference;
+        final roomData = roomDoc.data();
+        final RoomModel room = RoomModel.fromMap(roomData);
+
+        // Remove exam from room.exams
+        final updatedExams = List<String>.from(room.exams)..remove(exam.examId);
+
+        // Restore students to duplicatestudents
+        final removedStudents = room.membersInRoom[exam.examId] ?? [];
+        final updatedDuplicateList = [
+          ...exam.duplicatestudents ?? [],
+          ...removedStudents
+        ];
+
+        // Mark seats as empty
+        final updatedSeats = room.allSeats?.map((seat) {
+          if (seat['exam'] == exam.examId) {
+            return {
+              ...seat,
+              "exam": "Empty",
+              "student": null,
+              "color": AppColors.grey,
+            };
+          }
+          return seat;
+        }).toList() ?? [];
+
+        // Remove exam entry from membersInRoom
+        final updatedMembers = Map<String, List<StudentsModel>>.from(room.membersInRoom);
+        updatedMembers.remove(exam.examId);
+
+        // Update room in batch
+        batch.update(roomRef, {
+          'exams': updatedExams,
+          'membersInRoom': updatedMembers,
+          'allSeats': updatedSeats,
+        });
+      }
+
+      // 2️⃣ Delete exam document
+      batch.delete(examRef);
+
+      // 3️⃣ Commit batch
+      await batch.commit();
+
+      log("✅ Exam ${exam.examId} deleted and rooms cleaned.");
+      return true; // success
     } catch (e) {
-      log("❌ Error while deleting exam: $e");
+      log("❌ Error deleting exam ${exam.examId}: $e");
+      return false; // failed
     }
   }
+
 
   /// Update an existing exam (e.g., date, courseName, student list)
   Future<void> updateExam(ExamModel examModel) async {
