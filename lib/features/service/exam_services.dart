@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/features/models/exam_model.dart';
 import 'package:bca_exam_managment/features/models/room_model.dart';
 import 'package:bca_exam_managment/features/models/student_model.dart';
@@ -177,9 +178,7 @@ Future<void> deleteExamFromRoom({
     final RoomModel room = RoomModel.fromMap(roomData);
 
     // 2️⃣ Extract students assigned in THIS room for THIS exam
-    final removedStudents =
-        room.membersInRoom[exam.examId] ?? []; // List<StudentsModel>
-
+    final removedStudents = room.membersInRoom[exam.examId] ?? []; // List<StudentsModel>
     log("🧍 Students to restore: ${removedStudents.map((s) => s.regNo).toList()}");
 
     // 3️⃣ Restore these students back into exam.duplicateStudents
@@ -188,9 +187,18 @@ Future<void> deleteExamFromRoom({
       ...removedStudents
     ];
 
-    // 4️⃣ Remove allSeats entries that belong to this exam
-    final updatedSeats =
-        room.allSeats?.where((seat) => seat["exam"] != exam.examId).toList() ?? [];
+    // 4️⃣ Mark seats as empty instead of removing them
+    final updatedSeats = room.allSeats?.map((seat) {
+      if (seat["exam"] == exam.examId) {
+        return {
+          ...seat,
+          "exam": "Empty",                  // mark seat as empty
+          "student": null,                  // remove student
+          "color": AppColors.grey,       // gray color for empty seat
+        };
+      }
+      return seat;
+    }).toList() ?? [];
 
     // 5️⃣ Remove exam entry from the room model
     final updatedMembers = Map<String, List<StudentsModel>>.from(room.membersInRoom);
@@ -203,12 +211,11 @@ Future<void> deleteExamFromRoom({
     final updatedRoom = room.copyWith(
       exams: updatedExams,
       membersInRoom: updatedMembers,
-      allSeats: updatedSeats,
+      allSeats: updatedSeats, // keep all seats but mark as empty
     );
 
     // 7️⃣ Update Firestore using a batch
     final batch = firestore.batch();
-
     batch.update(roomRef, updatedRoom.toMap());
 
     batch.update(
@@ -227,7 +234,6 @@ Future<void> deleteExamFromRoom({
     throw Exception("Failed to delete exam from room: $e");
   }
 }
-
 
 
 }

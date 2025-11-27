@@ -24,17 +24,21 @@ class _AddRoomsScreenState extends State<AddRoomsScreen> {
   );
 
   @override
-  void initState() {
-    super.initState();
-    final provider = Provider.of<RoomProvider>(context, listen: false);
+ @override
+void initState() {
+  super.initState();
+  final provider = Provider.of<RoomProvider>(context, listen: false);
 
+  // Defer execution until after first frame
+  WidgetsBinding.instance.addPostFrameCallback((_) {
     if (widget.room != null) {
-      // Pre-fill controllers for update
       provider.setRoomForUpdate(widget.room!);
     } else {
       provider.clearControllers();
     }
-  }
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {

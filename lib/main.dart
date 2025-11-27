@@ -6,7 +6,6 @@ import 'package:bca_exam_managment/features/service/exam_services.dart';
 import 'package:bca_exam_managment/features/service/room_services.dart';
 import 'package:bca_exam_managment/features/view/app_root/app_root.dart';
 import 'package:bca_exam_managment/features/view/splash_screens.dart';
-import 'package:bca_exam_managment/features/view/student/students_profile.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
 import 'package:bca_exam_managment/features/view_model/exam_viewmodel.dart';
 import 'package:bca_exam_managment/features/view_model/home_viewmodel.dart';
@@ -49,7 +48,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
        // home: AppRoot(),
-         home: Stdprofile(),
+         home: SplashScreens(),
       ),
     );
   }

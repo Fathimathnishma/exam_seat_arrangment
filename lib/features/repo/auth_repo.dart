@@ -25,6 +25,9 @@ class AuthRepository {
   Future<void> deleteUserAccount(String userId) {
     return _authService.deleteUserAccount(userId);
   }
+  Future<bool> deleteStudentAccount(String userId) {
+    return _authService.deleteStudentAccount(userId);
+  }
   Future<void> deleteSelfAccount( ) {
     return _authService.deleteSelfAccount();
   }

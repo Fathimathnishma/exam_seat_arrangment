@@ -150,7 +150,7 @@ class _AllExamScreenState extends State<AllExamScreen> {
                               );
                             },
                             onDelete: () {
-                              state.deleteExam(data.examId!);
+                              state.deleteExam(data);
                             },
                           ),
                         ),

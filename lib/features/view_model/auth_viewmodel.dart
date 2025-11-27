@@ -315,7 +315,14 @@ Future<Map<String, dynamic>?> checkUserStatus() async {
 /// 🔹 Student Logout (without clearing SharedPreferences)
 Future<void> studentLogout({VoidCallback? onSuccess}) async {
   try {
-    // Clear only the in-memory user
+    final prefs = await SharedPreferences.getInstance();
+    
+    await prefs.remove("isStudentLoggedIn");
+    await prefs.remove("studentId");
+    await prefs.remove("studentName");
+    await prefs.remove("department");
+    await prefs.remove("sem");
+
     currentStudentUser = null;
 
     showCustomToast(message: 'Student logged out successfully!');
@@ -328,13 +335,27 @@ Future<void> studentLogout({VoidCallback? onSuccess}) async {
   }
 }
 
-Future<void> deleteStudentAccount({VoidCallback? onSuccess}) async {
+
+Future<bool> deleteStudentAccount() async {
   try {
-    if (currentStudentUser == null) return;
+    if (currentStudentUser == null) return false;
 
-    await _authRepo.deleteUserAccount(currentStudentUser!.regNo);
+    // Call repo -> returns bool
+    final deleted = await _authRepo.deleteStudentAccount(
+      currentStudentUser!.regNo,
+    );
 
-    // Clear local session
+    if (!deleted) {
+      showCustomToast(
+        message: 'Student not found! Cannot delete.',
+        isError: true,
+      );
+      return false; // STOP HERE
+    }
+
+    // --------------------------------------------
+    // DELETE SUCCESS → CLEAR LOCAL SESSION
+    // --------------------------------------------
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("isStudentLoggedIn");
     await prefs.remove("studentId");
@@ -346,13 +367,18 @@ Future<void> deleteStudentAccount({VoidCallback? onSuccess}) async {
 
     showCustomToast(message: 'Student account deleted successfully!');
 
-    if (onSuccess != null) onSuccess();
-  } catch (e) {
-    showCustomToast(message: 'Failed to delete student account: $e', isError: true);
-  } finally {
     notifyListeners();
+    return true; // SUCCESS
+
+  } catch (e) {
+    showCustomToast(
+      message: 'Failed to delete student account: $e',
+      isError: true,
+    );
+    return false;
   }
 }
+
   /// 🔹 Fetch Seat Details
 Future<void> fetchSeatDetails({
   required String regNo,
@@ -367,28 +393,41 @@ Future<void> fetchSeatDetails({
     final cleanDept = department.trim();
     final cleanSem = sem.trim();
 
-    seatDetails = await _authRepo.fetchSeatAndRoom(
+    final result = await _authRepo.fetchSeatAndRoom(
       regNo: cleanRegNo,
       department: cleanDept,
       sem: cleanSem,
     );
 
-    // -----------------------------------------
-    // If no seat found → Show message & return
-    // -----------------------------------------
-    if (seatDetails == null) {
+    // Store result 🔥 (IMPORTANT)
+    seatDetails = result;
+
+    // CASE 1 → No seat at all
+    if (result == null) {
       showCustomToast(
-        message: "Seat not found for this student",
+        message: "No seat details found for this student",
         isError: true,
       );
       return;
     }
 
-    // -----------------------------------------
-    // SUCCESS
-    // -----------------------------------------
+    // CASE 2 → Seat exists but NOT allowed to show yet
+    if (result["allowed"] == false) {
+      final msg = result["message"] ?? "Too early to view seat.";
+      final remaining = result["minutesRemaining"] ?? 0;
+
+      showCustomToast(
+        message: "$msg ($remaining minutes remaining)",
+        isError: true,
+      );
+
+      notifyListeners(); // 🔥 UPDATE UI
+      return;
+    }
+
+    // CASE 3 → Success
     showCustomToast(message: "Seat details loaded!");
-    log("Seat details loaded!"); 
+    log("Seat details loaded!");
 
   } catch (e) {
     log("SEAT FETCH ERROR: $e");
@@ -398,7 +437,6 @@ Future<void> fetchSeatDetails({
     notifyListeners();
   }
 }
-
 
 
 

@@ -179,7 +179,7 @@ log("⏳ Minutes remaining for exam: $minutesRemaining");
 // BLOCK IF MORE THAN 15 MIN REMAINING
 if (minutesRemaining > 15) {
   log("❌ Too early to show seat");
-  return {
+   return {
     "allowed": false,
     "message": "Seat will be visible only 15 minutes before the exam.",
     "minutesRemaining": minutesRemaining,
@@ -272,28 +272,64 @@ if (minutesRemaining > 15) {
 }
 
 
-  Future<void> deleteUserAccount(String userId) async {
+  Future<bool> deleteUserAccount(String userId) async {
   try {
-    // Fetch user data before deletion for logging
-    final doc = await usersRef.doc(userId).get();
+    if (userId.isEmpty) return false;
+
+    // Convert uppercase → lowercase
+    final cleanId = userId.trim().toLowerCase();
+
+    // Check user exists
+    final doc = await usersRef.doc(cleanId).get();
+
     if (!doc.exists) {
-      log("⚠️ Attempted to delete non-existing user: $userId");
-      return;
+      log("❌ No user found with ID: $cleanId");
+      return false; // <-- very important
     }
 
     final userData = doc.data();
-    
-    // Delete the user
-    await usersRef.doc(userId).delete();
-    
-    // Log deleted user info
-    log("✅ Admin deleted user: $userId, data: $userData");
+
+    // Delete user
+    await usersRef.doc(cleanId).delete();
+
+    log("✅ User deleted: $cleanId, data: $userData");
+
+    return true; // success
+
   } catch (e) {
     log("🔥 Error deleting user $userId: $e");
-    rethrow;
+    return false; // fail
   }
 }
+  Future<bool> deleteStudentAccount(String studentId) async {
+  try {
+    if (studentId.isEmpty) return false;
 
+    // Convert uppercase → lowercase
+    final cleanId = studentId.trim().toLowerCase();
+
+    // Check user exists
+    final doc = await studentsRef.doc(cleanId).get();
+
+    if (!doc.exists) {
+      log("❌ No user found with ID: $cleanId");
+      return false; // <-- very important
+    }
+
+    final userData = doc.data();
+
+    // Delete user
+    await studentsRef.doc(cleanId).delete();
+
+    log("✅ User deleted: $cleanId, data: $userData");
+
+    return true; // success
+
+  } catch (e) {
+    log("🔥 Error deleting user $studentId: $e");
+    return false; // fail
+  }
+}
 
   // ===============================================================
   // 🚀 ADDED: STUDENT SIGNUP & LOGIN

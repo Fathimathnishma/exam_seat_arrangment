@@ -1,6 +1,6 @@
 import 'package:bca_exam_managment/core/utils/app_colors.dart';
 import 'package:bca_exam_managment/core/utils/app_images.dart';
-import 'package:bca_exam_managment/features/view/student/students_login.dart';
+import 'package:bca_exam_managment/features/view/user_type_screen.dart';
 import 'package:bca_exam_managment/features/view/teachers/profile/settings/customer_service_screen.dart';
 import 'package:bca_exam_managment/features/view/teachers/profile/settings/privacy&policy.dart';
 import 'package:bca_exam_managment/features/view_model/auth_viewmodel.dart';
@@ -12,39 +12,6 @@ class Stdprofile extends StatefulWidget {
 
   @override
   State<Stdprofile> createState() => _StdProfileState();
-}
-Future<void> showLogoutDialog(BuildContext context, {required VoidCallback onConfirm,required String text}) async {
-  return showDialog(
-    context: context,  
-    builder: (context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title:  Text(
-          text,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content:  Text('Are you sure you want to $text?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), // Close dialog
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-             
-            ),
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              onConfirm(); // Run the logout logic
-            },
-            child:  Text(text),
-          ),
-        ],
-      );
-    },
-  );
 }
 
 class _StdProfileState extends State<Stdprofile> {
@@ -58,99 +25,138 @@ class _StdProfileState extends State<Stdprofile> {
         backgroundColor: Colors.blue,
         leading: BackButton(color: Colors.white),
         centerTitle: true,
-        title: Text(
+        title: const Text(
           "Profile",
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
         ),
       ),
+
       body: Consumer<AuthProvider>(
         builder: (context, state, child) {
-          return  Column(
-          children: [
-            // Profile picture
-            CircleAvatar(
-              radius: 65,
-              backgroundImage: AssetImage(AppImages.Defaultprofile),
-            ),
-        
-            SizedBox(height: 15),
-        
-            // STUDENT DETAILS FROM AUTH PROVIDER
-            Text(
-              "Name: ${student?.name ?? 'N/A'}",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            Text(
-              "Reg No: ${student?.regNo ?? 'N/A'}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-            Text(
-              "Department: ${student?.department ?? 'N/A'}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-            Text(
-              "Semester: ${student?.sem ?? 'N/A'}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-        
-            SizedBox(height: 35),
-        
-            // ---------------- MENU OPTIONS ----------------
-            _menuTile(
-              title: "Privacy Policy",
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => PrivacyPolicyScreen(),));
-              },
-            ),
-            SizedBox(height: 15),
-        
-            _menuTile(
-              title: "Help",
-              onTap: () {
-                 Navigator.push(context, MaterialPageRoute(builder: (context) => CustomerServiceScreen(),));
-              },
-            ),
-            SizedBox(height: 15),
-        
-            _menuTile(
-              title: "delete",
-              onTap: () {
-                state.deleteStudentAccount();
-              },
-            ),
-            SizedBox(height: 15),
-        
-            // LOGOUT
-            InkWell(
-              onTap: () async {
-                await state.studentLogout();
-                // CLEAR provider states before logout
-               // context.read<AuthProvider>().l();
-        
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => StudentAuthScreen(),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // PROFILE IMAGE
+                CircleAvatar(
+                  radius: 55,
+                  backgroundImage: AssetImage(AppImages.Defaultprofile),
+                ),
+
+                const SizedBox(height: 10),
+
+                // STUDENT DETAILS
+                Text(
+                  "Name: ${student?.name ?? 'N/A'}",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
-                );
-              },
-              child: _menuTile(
-                title: "Log Out",
-                color: Colors.red,
-              ),
+                ),
+                Text(
+                  "Reg No: ${student?.regNo ?? 'N/A'}",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  "Department: ${student?.department ?? 'N/A'}",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  "Semester: ${student?.sem ?? 'N/A'}",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // MENU TILES
+                _menuTile(
+                  title: "Privacy Policy",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => PrivacyPolicyScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                _menuTile(
+                  title: "Help",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CustomerServiceScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // DELETE ACCOUNT
+                _menuTile(
+                  title: "Delete Account",
+                  color: Colors.red,
+                  onTap: () {
+                    showLogoutDialog(
+                      context,
+                      text: "Delete Account",
+                      onConfirm: () async {
+                        final deleted = await state.deleteStudentAccount();
+
+                        if (deleted) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => UserTypeScreen()),
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // LOGOUT
+                _menuTile(
+                  title: "Log Out",
+                  color: Colors.red,
+                  onTap: () {
+                    showLogoutDialog(
+                      context,
+                      text: "Logout",
+                      onConfirm: () async {
+                        await state.studentLogout();
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => UserTypeScreen()),
+                          (_) => false,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        );
+          );
         },
-       
       ),
     );
   }
 
+  // REUSABLE TILE
   Widget _menuTile({
     required String title,
     Color color = Colors.black,
@@ -159,33 +165,59 @@ class _StdProfileState extends State<Stdprofile> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        height: 50,
-        width: 380,
+        height: 48,
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
-          color:  AppColors.white
+          borderRadius: BorderRadius.circular(8),
+          color: AppColors.white,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 20),
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w500,
-                  color: color,
-                ),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: color,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: Icon(Icons.arrow_forward_ios, size: 18, color: color),
-            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: color),
           ],
         ),
       ),
     );
   }
+}
+
+// CONFIRMATION DIALOG
+Future<void> showLogoutDialog(
+  BuildContext context, {
+  required VoidCallback onConfirm,
+  required String text,
+}) async {
+  return showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text("Are you sure you want to $text?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            child: Text(text),
+          ),
+        ],
+      );
+    },
+  );
 }
