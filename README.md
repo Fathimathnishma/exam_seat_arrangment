@@ -86,8 +86,9 @@ Managing large datasets with clean state management
 
 ## 📱 App Preview
 
-![App Preview](assets/app_preview.png)
 
 
+
+![WhatsApp Image 2026-02-07 at 3 54 00 PM](https://github.com/user-attachments/assets/1600c8af-ab4f-4ba6-94ec-604c9a7f480c)
 
 
