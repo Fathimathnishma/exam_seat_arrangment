@@ -84,6 +84,10 @@ Building scalable, admin-focused Flutter applications
 
 Managing large datasets with clean state management
 
+## 📱 App Preview
 
-![App Preview](screenshots/exam_app_preview.jpeg)
+![App Preview](assets/app_preview.png)
+
+
+
 
